@@ -1,0 +1,23 @@
+package io.github.ark85.study.network.model.mapper;
+
+import io.github.ark85.study.network.model.User;
+import org.springframework.jdbc.core.RowMapper;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.UUID;
+
+public class UserRowMapper implements RowMapper<User> {
+    @Override
+    public User mapRow(ResultSet rs, int rowNum) throws SQLException {
+        return new User(
+                rs.getObject("id", UUID.class),
+                rs.getString("first_name"),
+                rs.getString("second_name"),
+                rs.getString("password_hash"),
+                rs.getString("birth_date"),
+                rs.getString("biography"),
+                rs.getString("city")
+        );
+    }
+}
