@@ -5,6 +5,7 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.UUID;
 
 public class UserRowMapper implements RowMapper<User> {
@@ -15,7 +16,7 @@ public class UserRowMapper implements RowMapper<User> {
                 rs.getString("first_name"),
                 rs.getString("second_name"),
                 rs.getString("password_hash"),
-                rs.getString("birth_date"),
+                rs.getObject("birth_date", LocalDate.class),
                 rs.getString("biography"),
                 rs.getString("city")
         );

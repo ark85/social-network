@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
@@ -14,7 +15,7 @@ public class UserGetResponse {
     private UUID id;
     private String firstName;
     private String secondName;
-    private String birthDate;
+    private LocalDate birthDate;
     private String biography;
     private String city;
 
