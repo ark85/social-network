@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: network-postgres
+
+    environment:
+      POSTGRES_DB: ${NETWORK_DB_NAME}
+      POSTGRES_USER: ${NETWORK_DB_USERNAME}
+      POSTGRES_PASSWORD: ${NETWORK_DB_PASSWORD}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-d", "${NETWORK_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: network-backend
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      NETWORK_DB_URL: ${NETWORK_DB_URL}
+      NETWORK_DB_USERNAME: ${NETWORK_DB_USERNAME}
+      NETWORK_DB_PASSWORD: ${NETWORK_DB_PASSWORD}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
