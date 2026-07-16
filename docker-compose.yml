@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: social-network-postgres
+
+    environment:
+      POSTGRES_DB: ${SOCIAL_NETWORK_DB_NAME}
+      POSTGRES_USER: ${SOCIAL_NETWORK_DB_USERNAME}
+      POSTGRES_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-d", "${SOCIAL_NETWORK_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: social-network-backend
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      SOCIAL_NETWORK_DB_URL: ${SOCIAL_NETWORK_DB_URL}
+      SOCIAL_NETWORK_DB_USERNAME: ${SOCIAL_NETWORK_DB_USERNAME}
+      SOCIAL_NETWORK_DB_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

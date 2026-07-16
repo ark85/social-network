@@ -1,0 +1,15 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: ark85
+      comment: add pgcrypto extension
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pgcrypto;
+  - changeSet:
+      id: 2
+      author: ark85
+      comment: users table creation
+      changes:
+        - sqlFile:
+            path: db/changelog/v1/create_users_table.sql
