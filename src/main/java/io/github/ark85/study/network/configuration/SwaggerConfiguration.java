@@ -22,7 +22,7 @@ public class SwaggerConfiguration {
                         .description("Social network API description.")
                         .version("1.0")
                         .contact(new Contact().name("Arkadii Kudashov")
-                                .email("https://github.com/ark85")));
+                                .url("https://github.com/ark85")));
     }
 
     private SecurityScheme createAPIKeyScheme() {
