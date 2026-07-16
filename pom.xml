@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>io.github.ark85.study</groupId>
-    <artifactId>network</artifactId>
+    <artifactId>social-network</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>network</name>
-    <description>network</description>
+    <name>social-network</name>
+    <description>social-network</description>
     <url/>
     <licenses>
         <license/>
