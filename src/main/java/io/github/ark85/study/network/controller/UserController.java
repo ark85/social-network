@@ -4,6 +4,7 @@ import io.github.ark85.study.network.model.api.request.UserCreateRequest;
 import io.github.ark85.study.network.model.api.response.UserCreateResponse;
 import io.github.ark85.study.network.model.api.response.UserGetResponse;
 import io.github.ark85.study.network.service.UserService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,11 +20,11 @@ public class UserController {
 
     @GetMapping(path = "/get/{id}")
     public ResponseEntity<UserGetResponse> getUserById(@PathVariable UUID id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+        return ResponseEntity.ok(new UserGetResponse(userService.getUserById(id)));
     }
 
     @PostMapping(path = "/register")
-    public ResponseEntity<UserCreateResponse> registerUser(@RequestBody UserCreateRequest userCreateRequest) {
+    public ResponseEntity<UserCreateResponse> registerUser(@RequestBody @Valid UserCreateRequest userCreateRequest) {
         return ResponseEntity.ok(userService.registerUser(userCreateRequest));
     }
 }

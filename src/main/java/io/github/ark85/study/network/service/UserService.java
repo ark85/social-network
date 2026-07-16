@@ -3,7 +3,6 @@ package io.github.ark85.study.network.service;
 import io.github.ark85.study.network.model.User;
 import io.github.ark85.study.network.model.api.request.UserCreateRequest;
 import io.github.ark85.study.network.model.api.response.UserCreateResponse;
-import io.github.ark85.study.network.model.api.response.UserGetResponse;
 import io.github.ark85.study.network.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +23,12 @@ public class UserService implements UserDetailsService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public UserGetResponse getUserById(UUID id) {
-        return new UserGetResponse(userRepository.getUserById(id));
+    public User getUserById(UUID id) {
+        User user = userRepository.getUserById(id);
+        if (user == null) {
+            throw new UsernameNotFoundException("User is not found.");
+        }
+        return user;
     }
 
     public UserCreateResponse registerUser(UserCreateRequest userCreateRequest) {
@@ -37,10 +40,6 @@ public class UserService implements UserDetailsService {
 
     @Override
     public @NullMarked UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.getUserById(UUID.fromString(username));
-        if (user == null) {
-            throw new UsernameNotFoundException("User is not found.");
-        }
-        return user;
+        return getUserById(UUID.fromString(username));
     }
 }

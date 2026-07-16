@@ -4,6 +4,7 @@ import io.github.ark85.study.network.model.api.request.UserLoginRequest;
 import io.github.ark85.study.network.model.api.response.UserLoginResponse;
 import io.github.ark85.study.network.service.JwtService;
 import io.github.ark85.study.network.service.UserService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,7 +23,7 @@ public class LoginController {
     private final AuthenticationManager authenticationManager;
 
     @PostMapping("/login")
-    public ResponseEntity<UserLoginResponse> login(@RequestBody UserLoginRequest userLoginRequest) {
+    public ResponseEntity<UserLoginResponse> login(@RequestBody @Valid UserLoginRequest userLoginRequest) {
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
