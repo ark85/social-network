@@ -8,5 +8,5 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "social-network.import")
 @Data
 public class ImportProperties {
-    private int batchSize = 10000;
+    private int batchSize;
 }
