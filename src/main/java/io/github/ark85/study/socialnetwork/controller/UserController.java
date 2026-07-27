@@ -42,7 +42,7 @@ public class UserController {
     }
 
     @PostMapping(path = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> importUsers(@RequestParam MultipartFile usersFile) throws IOException {
+    public ResponseEntity<Void> importUsers(@RequestParam(name = "file") MultipartFile usersFile) throws IOException {
         userService.importUsers(usersFile);
         return ResponseEntity.ok().build();
     }
