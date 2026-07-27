@@ -81,6 +81,7 @@ public class UserService implements UserDetailsService {
                 usersToCreate.add(createUserFromCsvRecord(userRecord));
 
                 if (usersToCreate.size() == importProperties.getBatchSize()) {
+                    log.info("Imported {} users", importProperties.getBatchSize());
                     userRepository.createAll(usersToCreate);
                     usersToCreate.clear();
                 }

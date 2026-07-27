@@ -54,7 +54,7 @@ public class UserRepository {
                     preparedStatement.setString(1, user.getFirstName());
                     preparedStatement.setString(2, user.getSecondName());
                     preparedStatement.setString(3, user.getPasswordHash());
-                    preparedStatement.setObject(4, user.getBirthDate(), SqlTypes.LOCAL_DATE);
+                    preparedStatement.setObject(4, user.getBirthDate());
                     preparedStatement.setString(5, user.getBiography());
                     preparedStatement.setString(6, user.getCity());
                 }
