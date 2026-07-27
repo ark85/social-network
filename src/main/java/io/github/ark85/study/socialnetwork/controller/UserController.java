@@ -5,14 +5,18 @@ import io.github.ark85.study.socialnetwork.model.api.response.UserCreateResponse
 import io.github.ark85.study.socialnetwork.model.api.response.UserGetResponse;
 import io.github.ark85.study.socialnetwork.service.UserService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping(path = "/user")
+@Validated
 @AllArgsConstructor
 public class UserController {
 
@@ -26,5 +30,11 @@ public class UserController {
     @PostMapping(path = "/register")
     public ResponseEntity<UserCreateResponse> registerUser(@RequestBody @Valid UserCreateRequest userCreateRequest) {
         return ResponseEntity.ok(userService.registerUser(userCreateRequest));
+    }
+
+    @GetMapping(path = "/search")
+    public ResponseEntity<List<UserGetResponse>> searchUsers(@RequestParam("first_name") @NotBlank String firstName,
+                                                             @RequestParam("second_name") @NotBlank String secondName) {
+        return ResponseEntity.ok(userService.searchUsersByFirstNameAndSecondName(firstName, secondName));
     }
 }

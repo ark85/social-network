@@ -8,6 +8,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -19,7 +20,7 @@ public class UserRepository {
     public User getUserById(UUID id) {
         try {
             return this.jdbcTemplate.queryForObject(
-                    "select * from users where id = ?",
+                    "SELECT * FROM users WHERE id = ?",
                     new UserRowMapper(), id);
         } catch (EmptyResultDataAccessException ex) {
             log.error("User is not found.", ex);
@@ -29,10 +30,16 @@ public class UserRepository {
 
     public UUID createUser(User user) {
         return this.jdbcTemplate.queryForObject(
-                "insert into users (first_name, second_name, password_hash, birth_date, biography, city) values " +
+                "INSERT INTO users (first_name, second_name, password_hash, birth_date, biography, city) VALUES " +
                         "(?, ?, ?, ?, ?, ?) returning id",
                 UUID.class,
                 user.getFirstName(), user.getSecondName(), user.getPasswordHash(),
                 user.getBirthDate(), user.getBiography(), user.getCity());
+    }
+
+    public List<User> searchUsersByFirstNameAndSecondName(String firstName, String secondName) {
+        return this.jdbcTemplate.queryForList(
+                "select * from users where first_name LIKE '?%' AND second_name LIKE '?%'",
+                User.class, firstName, secondName);
     }
 }
