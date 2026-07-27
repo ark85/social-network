@@ -13,7 +13,6 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.jspecify.annotations.NullMarked;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -68,8 +67,10 @@ public class UserService implements UserDetailsService {
     }
 
     public void importUsers(MultipartFile usersFile) throws IOException {
-        log.info("Start importUsers");
+        log.info("Start importUsers with batchSize = {}", importProperties.getBatchSize());
         List<User> usersToCreate = new ArrayList<>(importProperties.getBatchSize());
+        // generate any password
+        String passwordHash = passwordEncoder.encode(UUID.randomUUID().toString());
         try (
                 Reader reader = new InputStreamReader(usersFile.getInputStream(), StandardCharsets.UTF_8);
                 CSVParser parser = CSVFormat.DEFAULT.builder()
@@ -78,10 +79,10 @@ public class UserService implements UserDetailsService {
                         .parse(reader)
         ) {
             for (CSVRecord userRecord : parser) {
-                usersToCreate.add(createUserFromCsvRecord(userRecord));
+                User user = createUserFromCsvRecord(userRecord, passwordHash);
+                usersToCreate.add(user);
 
                 if (usersToCreate.size() == importProperties.getBatchSize()) {
-                    log.info("Imported {} users", importProperties.getBatchSize());
                     userRepository.createAll(usersToCreate);
                     usersToCreate.clear();
                 }
@@ -94,15 +95,13 @@ public class UserService implements UserDetailsService {
         log.info("importUsers is successfully finished");
     }
 
-    private User createUserFromCsvRecord(CSVRecord userRecord) {
+    private User createUserFromCsvRecord(CSVRecord userRecord, String commonPasswordHash) {
         String[] firstSecondName = userRecord.get(0).split("\\s+");
-        // generate any password
-        String passwordHash = passwordEncoder.encode(UUID.randomUUID().toString());
         return new User(
                 null,
                 firstSecondName[0],
                 firstSecondName[1],
-                passwordHash,
+                commonPasswordHash,
                 LocalDate.parse(userRecord.get(1)),
                 "",
                 userRecord.get(2)
