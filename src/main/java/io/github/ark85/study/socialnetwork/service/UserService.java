@@ -68,6 +68,7 @@ public class UserService implements UserDetailsService {
     }
 
     public void importUsers(MultipartFile usersFile) throws IOException {
+        log.info("Start importUsers");
         List<User> usersToCreate = new ArrayList<>(importProperties.getBatchSize());
         try (
                 Reader reader = new InputStreamReader(usersFile.getInputStream(), StandardCharsets.UTF_8);
@@ -89,6 +90,7 @@ public class UserService implements UserDetailsService {
         if (!usersToCreate.isEmpty()) {
             userRepository.createAll(usersToCreate);
         }
+        log.info("importUsers is successfully finished");
     }
 
     private User createUserFromCsvRecord(CSVRecord userRecord) {
