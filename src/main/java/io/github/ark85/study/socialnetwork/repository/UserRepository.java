@@ -51,8 +51,8 @@ public class UserRepository {
                 users,
                 users.size(),
                 (preparedStatement, user) -> {
-                    preparedStatement.setString(1, user.getFirstName());
-                    preparedStatement.setString(2, user.getSecondName());
+                    preparedStatement.setString(1, user.getSecondName());
+                    preparedStatement.setString(2, user.getFirstName());
                     preparedStatement.setString(3, user.getPasswordHash());
                     preparedStatement.setObject(4, user.getBirthDate());
                     preparedStatement.setString(5, user.getBiography());
