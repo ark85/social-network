@@ -5,10 +5,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "spring.datasource")
+@ConfigurationProperties(prefix = "social-network.import")
 @Data
-public class DataSourceProperties {
-    private String url;
-    private String username;
-    private String password;
+public class ImportProperties {
+    private int batchSize;
 }

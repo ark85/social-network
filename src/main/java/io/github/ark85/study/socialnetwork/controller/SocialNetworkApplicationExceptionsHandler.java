@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 @Slf4j
@@ -46,5 +47,15 @@ public class SocialNetworkApplicationExceptionsHandler {
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<Void> handleUsernameNotFoundException(UsernameNotFoundException ex) {
         return ResponseEntity.notFound().build();
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.CONTENT_TOO_LARGE.name(),
+                "Uploaded file is too large."
+        );
+        return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE)
+                .body(errorResponse);
     }
 }
