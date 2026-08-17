@@ -79,6 +79,23 @@ services:
       timeout: 5s
       retries: 5
 
+  haproxy:
+    image: haproxy:3.4.3
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+      postgres-replica-1:
+        condition: service_healthy
+      postgres-replica-2:
+        condition: service_healthy
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    ports:
+      - "5432:5432"
+      - "5433:5433"
+    networks:
+      - postgres
+
   backend:
     build:
       context: .
