@@ -1,12 +1,13 @@
 services:
   postgres-master:
-    build: ./postgres/master
+    build: ./compose-configuration/postgres/master
     container_name: social-network-postgres-master
 
     environment:
       POSTGRES_DB: ${SOCIAL_NETWORK_DB_NAME}
       POSTGRES_USER: ${SOCIAL_NETWORK_DB_USERNAME}
       POSTGRES_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
+      POSTGRES_HOST: postgres-master
       POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
       POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
 
@@ -14,17 +15,17 @@ services:
       - postgres
 
     volumes:
-      - postgres_master_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql
       - postgres_basebackup:/var/lib/postgresql/basebackup
 
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready", "-d", "${SOCIAL_NETWORK_DB_NAME}" ]
+      test: [ "CMD-SHELL", "pg_isready -d '${SOCIAL_NETWORK_DB_NAME}' -U '${SOCIAL_NETWORK_DB_USERNAME}'" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
   postgres-replica-1:
-    build: ./postgres/replica
+    build: ./compose-configuration/postgres/replica
     container_name: social-network-postgres-replica-1
 
     environment:
@@ -52,7 +53,7 @@ services:
       retries: 5
 
   postgres-replica-2:
-    build: ./postgres/replica
+    build: ./compose-configuration/postgres/replica
     container_name: social-network-postgres-replica-2
 
     environment:
@@ -81,20 +82,27 @@ services:
 
   haproxy:
     image: haproxy:3.4.3
+    container_name: social-network-haproxy
+
     depends_on:
       postgres-master:
         condition: service_healthy
-      postgres-replica-1:
-        condition: service_healthy
-      postgres-replica-2:
-        condition: service_healthy
+
+    networks:
+      - postgres
+
     volumes:
-      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./compose-configuration/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+
+    healthcheck:
+      test: [ "CMD-SHELL", "nc -z 127.0.0.1 5432 && nc -z 127.0.0.1 5433" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
     ports:
       - "5432:5432"
       - "5433:5433"
-    networks:
-      - postgres
 
   backend:
     build:
@@ -115,15 +123,11 @@ services:
       JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL}
 
     depends_on:
-      postgres-master:
-        condition: service_healthy
-      postgres-replica-1:
-        condition: service_healthy
-      postgres-replica-2:
+      haproxy:
         condition: service_healthy
 
 volumes:
-  postgres_master_data:
+  postgres_data:
   postgres_replica_1_data:
   postgres_replica_2_data:
   postgres_basebackup:

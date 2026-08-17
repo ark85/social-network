@@ -20,7 +20,7 @@ if [ ! -s "$PGDATA/PG_VERSION" ]; then
 
     PG_HBA="$PGDATA/pg_hba.conf"
 
-    REPLICATION_RULE="host replication replicator ${SUBNET} scram-sha-256"
+    REPLICATION_RULE="host replication ${POSTGRES_REPLICATION_USER} ${SUBNET} scram-sha-256"
     if ! grep -Fxq "$REPLICATION_RULE" "$PG_HBA"; then
         echo "$REPLICATION_RULE" >> "$PG_HBA"
     fi
@@ -42,7 +42,7 @@ if [ ! -s "$PGDATA/PG_VERSION" ]; then
     mkdir -p /var/lib/postgresql/basebackup
 
     PGPASSWORD="$POSTGRES_REPLICATION_PASSWORD" pg_basebackup \
-        -h pgmaster -D /var/lib/postgresql/basebackup -U ${POSTGRES_REPLICATION_USER} -v -P --wal-method=stream
+        -h ${POSTGRES_HOST} -D /var/lib/postgresql/basebackup -U ${POSTGRES_REPLICATION_USER} -v -P --wal-method=stream
 
     kill "$POSTGRES_PID"
     wait "$POSTGRES_PID" || true
