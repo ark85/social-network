@@ -1,18 +1,77 @@
 services:
-  postgres:
-    image: postgres:18
-    container_name: social-network-postgres
+  postgres-master:
+    build: ./postgres/master
+    container_name: social-network-postgres-master
 
     environment:
       POSTGRES_DB: ${SOCIAL_NETWORK_DB_NAME}
       POSTGRES_USER: ${SOCIAL_NETWORK_DB_USERNAME}
       POSTGRES_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
+      POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
+      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
 
-    ports:
-      - "5432:5432"
+    networks:
+      - postgres
 
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_master_data:/var/lib/postgresql
+      - postgres_basebackup:/var/lib/postgresql/basebackup
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-d", "${SOCIAL_NETWORK_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-replica-1:
+    build: ./postgres/replica
+    container_name: social-network-postgres-replica-1
+
+    environment:
+      POSTGRES_MASTER_HOST: postgres-master
+      POSTGRES_MASTER_PORT: 5432
+      POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
+      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+      REPLICA_NAME: postgres-replica-1
+
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+
+    networks:
+      - postgres
+
+    volumes:
+      - postgres_replica_1_data:/var/lib/postgresql
+      - postgres_basebackup:/var/lib/postgresql/basebackup:ro
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready", "-d", "${SOCIAL_NETWORK_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-replica-2:
+    build: ./postgres/replica
+    container_name: social-network-postgres-replica-2
+
+    environment:
+      POSTGRES_MASTER_HOST: postgres-master
+      POSTGRES_MASTER_PORT: 5432
+      POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
+      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+      REPLICA_NAME: postgres-replica-2
+
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+
+    networks:
+      - postgres
+
+    volumes:
+      - postgres_replica_2_data:/var/lib/postgresql
+      - postgres_basebackup:/var/lib/postgresql/basebackup:ro
 
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready", "-d", "${SOCIAL_NETWORK_DB_NAME}" ]
@@ -39,8 +98,18 @@ services:
       JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL}
 
     depends_on:
-      postgres:
+      postgres-master:
+        condition: service_healthy
+      postgres-replica-1:
+        condition: service_healthy
+      postgres-replica-2:
         condition: service_healthy
 
 volumes:
-  postgres_data:
+  postgres_master_data:
+  postgres_replica_1_data:
+  postgres_replica_2_data:
+  postgres_basebackup:
+
+networks:
+  postgres:
