@@ -45,12 +45,12 @@ PGPASSWORD="${POSTGRES_PASSWORD}" psql \
     -d "$POSTGRES_DB" \
     -c "SELECT pg_reload_conf();"
 
-# Backup folder for replicas
-mkdir -p /var/lib/postgresql/basebackup
-
+BASEBACKUP_DIR="/var/lib/postgresql/basebackup"
 if [ ! -f "$BASEBACKUP_DIR/PG_VERSION" ]; then
+  # Backup folder for replicas
+  mkdir -p $BASEBACKUP_DIR
   PGPASSWORD="$POSTGRES_REPLICATION_PASSWORD" pg_basebackup \
-      -h ${POSTGRES_HOST} -D /var/lib/postgresql/basebackup -U ${POSTGRES_REPLICATION_USER} -v -P --wal-method=stream
+      -h ${POSTGRES_HOST} -D $BASEBACKUP_DIR -U ${POSTGRES_REPLICATION_USER} -v -P --wal-method=stream
 fi
 
 kill "$POSTGRES_PID"

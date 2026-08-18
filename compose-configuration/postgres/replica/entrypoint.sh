@@ -6,7 +6,7 @@ echo "Starting PostgreSQL replica..."
 
 BASEBACKUP_DIR="/var/lib/postgresql/basebackup"
 
-if [ ! -s "$PGDATA/PG_VERSION" ]; then
+if  [ ! -f "$PGDATA/PG_VERSION" ] || [ ! -f "$PGDATA/standby.signal" ]; then
 
     echo "PGDATA is empty. Waiting for base backup..."
 
@@ -17,9 +17,8 @@ if [ ! -s "$PGDATA/PG_VERSION" ]; then
     echo "Base backup found."
 
     rm -rf "${PGDATA:?}"/*
-
+    mkdir -p "$PGDATA"
     cp -a "$BASEBACKUP_DIR"/. "$PGDATA"/
-
     chown -R postgres:postgres "$PGDATA"
 
     touch "$PGDATA/standby.signal"
