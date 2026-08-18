@@ -52,7 +52,7 @@ public class ReplicationRoutingConfiguration {
         return new DataSourceProperties();
     }
 
-    @Bean(destroyMethod = "shutdown")
+    @Bean
     @ConfigurationProperties("spring.datasource.read.hikari")
     public HikariDataSource readDataSource(@Qualifier("readDataSourceProperties") DataSourceProperties properties) {
         return properties.initializeDataSourceBuilder()
@@ -66,7 +66,7 @@ public class ReplicationRoutingConfiguration {
         return new DataSourceProperties();
     }
 
-    @Bean(destroyMethod = "shutdown")
+    @Bean
     @ConfigurationProperties("spring.datasource.write.hikari")
     public HikariDataSource writeDataSource(@Qualifier("writeDataSourceProperties") DataSourceProperties properties) {
         return properties.initializeDataSourceBuilder()

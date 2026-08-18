@@ -29,6 +29,9 @@ services:
     container_name: social-network-postgres-replica-1
 
     environment:
+      POSTGRES_DB: ${SOCIAL_NETWORK_DB_NAME}
+      POSTGRES_USER: ${SOCIAL_NETWORK_DB_USERNAME}
+      POSTGRES_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
       POSTGRES_MASTER_HOST: postgres-master
       POSTGRES_MASTER_PORT: 5432
       POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
@@ -57,6 +60,9 @@ services:
     container_name: social-network-postgres-replica-2
 
     environment:
+      POSTGRES_DB: ${SOCIAL_NETWORK_DB_NAME}
+      POSTGRES_USER: ${SOCIAL_NETWORK_DB_USERNAME}
+      POSTGRES_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
       POSTGRES_MASTER_HOST: postgres-master
       POSTGRES_MASTER_PORT: 5432
       POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
@@ -90,6 +96,7 @@ services:
 
     networks:
       - postgres
+      - social_network
 
     volumes:
       - ./compose-configuration/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
@@ -115,7 +122,8 @@ services:
       - "8080:8080"
 
     environment:
-      SOCIAL_NETWORK_DB_URL: ${SOCIAL_NETWORK_DB_URL}
+      SOCIAL_NETWORK_READ_DB_URL: ${SOCIAL_NETWORK_READ_DB_URL}
+      SOCIAL_NETWORK_WRITE_DB_URL: ${SOCIAL_NETWORK_WRITE_DB_URL}
       SOCIAL_NETWORK_DB_USERNAME: ${SOCIAL_NETWORK_DB_USERNAME}
       SOCIAL_NETWORK_DB_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
 
@@ -126,6 +134,15 @@ services:
       haproxy:
         condition: service_healthy
 
+    networks:
+      - social_network
+
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://backend:8080/api/health-check/ping || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   postgres_data:
   postgres_replica_1_data:
@@ -134,3 +151,4 @@ volumes:
 
 networks:
   postgres:
+  social_network:
