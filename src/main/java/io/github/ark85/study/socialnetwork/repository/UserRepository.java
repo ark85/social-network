@@ -40,7 +40,7 @@ public class UserRepository {
 
     public List<User> searchUsersByFirstNameAndSecondName(String firstName, String secondName) {
         return this.jdbcTemplate.query(
-                "select * from users where first_name LIKE ? AND second_name LIKE ?",
+                "SELECT * FROM users WHERE first_name LIKE ? AND second_name LIKE ?",
                 new UserRowMapper(), firstName + "%", secondName + "%");
     }
 
