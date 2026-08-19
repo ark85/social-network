@@ -41,6 +41,7 @@ public class UserService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
     private final ImportProperties importProperties;
 
+    @Transactional(readOnly = true)
     @Override
     public @NullMarked UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return getUserById(UUID.fromString(username));
