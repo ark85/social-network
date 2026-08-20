@@ -14,6 +14,11 @@ if [ -z "$SUBNET" ]; then
     exit 1
 fi
 
+POSTGRES_MASTER_CONFIG="include = '/etc/postgresql/postgres-master.conf'"
+if ! grep -Fxq "$POSTGRES_MASTER_CONFIG" "$PGDATA/postgresql.conf"; then
+    echo "$POSTGRES_MASTER_CONFIG" >> "$PGDATA/postgresql.conf"
+fi
+
 echo "Postgres subnet: $SUBNET"
 
 PG_HBA="$PGDATA/pg_hba.conf"
