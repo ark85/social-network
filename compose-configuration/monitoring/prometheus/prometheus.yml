@@ -1,0 +1,12 @@
+# my global config
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'social_network'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['localhost:9090','cadvisor:9080','node-exporter:9100', 'backend:8080', 'postgres-master:5432', 'postgres-replica-1:5432', 'postgres-replica-2:5432', 'haproxy:5432', 'haproxy:5433']

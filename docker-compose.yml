@@ -24,6 +24,9 @@ services:
       timeout: 5s
       retries: 5
 
+    expose:
+      - 5432
+
   postgres-replica-1:
     build: ./compose-configuration/postgres/replica
     container_name: social-network-postgres-replica-1
@@ -54,6 +57,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+    expose:
+      - 5432
 
   postgres-replica-2:
     build: ./compose-configuration/postgres/replica
@@ -86,6 +92,9 @@ services:
       timeout: 5s
       retries: 5
 
+    expose:
+      - 5432
+
   haproxy:
     build: ./compose-configuration/haproxy
     container_name: social-network-haproxy
@@ -111,6 +120,10 @@ services:
       - "5432:5432"
       - "5433:5433"
 
+    expose:
+      - 5432
+      - 5433
+
   backend:
     build:
       context: .
@@ -120,6 +133,9 @@ services:
 
     ports:
       - "8080:8080"
+
+    expose:
+      - 8080
 
     environment:
       SOCIAL_NETWORK_READ_DB_URL: ${SOCIAL_NETWORK_READ_DB_URL}
@@ -143,11 +159,102 @@ services:
       timeout: 5s
       retries: 10
 
+  # ----------- monitoring start -------------
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: monitoring_prometheus
+    restart: unless-stopped
+    volumes:
+      - ./compose-configuration/monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    expose:
+      - 9090
+    ports:
+      - 9090:9090
+    links:
+      - cadvisor:cadvisor
+      - alertmanager:alertmanager
+      - node-exporter:node-exporter
+    networks:
+      - postgres
+      - social_network
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: monitoring_node_exporter
+    restart: unless-stopped
+    expose:
+      - 9100
+    networks:
+      - postgres
+      - social_network
+
+  alertmanager:
+    image: prom/alertmanager
+    container_name: monitoring_alertmanager
+    ports:
+      - 9093:9093
+    expose:
+      - 9093
+    volumes:
+      - ./compose-configuration/monitoring/alertmanager/:/etc/alertmanager/
+    restart: always
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    networks:
+      - postgres
+      - social_network
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    container_name: monitoring_cadvisor
+    restart: unless-stopped
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    expose:
+      - 9080
+    networks:
+      - postgres
+      - social_network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: monitoring_grafana
+    restart: unless-stopped
+    links:
+      - prometheus:prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./compose-configuration/monitoring/grafana/provisioning:/var/lib/grafana/provisioning
+    environment:
+      GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_AUTH_DISABLE_SIGNOUT_MENU: "true"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    networks:
+      - postgres
+      - social_network
+    ports:
+      - 3000:3000
+
+  # ----------- monitoring end -------------
+
 volumes:
   postgres_data:
   postgres_replica_1_data:
   postgres_replica_2_data:
   postgres_basebackup:
+  prometheus_data:
+  grafana_data:
 
 networks:
   postgres:
