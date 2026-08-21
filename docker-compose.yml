@@ -161,6 +161,54 @@ services:
 
   # ----------- monitoring start -------------
 
+  postgres-exporter-master:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    container_name: monitoring_postgres_exporter_master
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_URI: postgres-master:5432/${SOCIAL_NETWORK_DB_NAME}?sslmode=disable
+      DATA_SOURCE_USER: ${SOCIAL_NETWORK_DB_USERNAME}
+      DATA_SOURCE_PASS: ${SOCIAL_NETWORK_DB_PASSWORD}
+    expose:
+      - 9187
+    networks:
+      - postgres
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+
+  postgres-exporter-replica-1:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    container_name: monitoring_postgres_exporter_replica_1
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_URI: postgres-replica-1:5432/${SOCIAL_NETWORK_DB_NAME}?sslmode=disable
+      DATA_SOURCE_USER: ${SOCIAL_NETWORK_DB_USERNAME}
+      DATA_SOURCE_PASS: ${SOCIAL_NETWORK_DB_PASSWORD}
+    expose:
+      - 9187
+    networks:
+      - postgres
+    depends_on:
+      postgres-replica-1:
+        condition: service_healthy
+
+  postgres-exporter-replica-2:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    container_name: monitoring_postgres_exporter_replica_2
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_URI: postgres-replica-2:5432/${SOCIAL_NETWORK_DB_NAME}?sslmode=disable
+      DATA_SOURCE_USER: ${SOCIAL_NETWORK_DB_USERNAME}
+      DATA_SOURCE_PASS: ${SOCIAL_NETWORK_DB_PASSWORD}
+    expose:
+      - 9187
+    networks:
+      - postgres
+    depends_on:
+      postgres-replica-2:
+        condition: service_healthy
+
   prometheus:
     image: prom/prometheus:latest
     container_name: monitoring_prometheus
@@ -175,23 +223,34 @@ services:
       - 9090
     ports:
       - 9090:9090
-    links:
-      - cadvisor:cadvisor
-      - alertmanager:alertmanager
-      - node-exporter:node-exporter
+    depends_on:
+      - cadvisor
+      - node-exporter
+      - alertmanager
+      - postgres-exporter-master
+      - postgres-exporter-replica-1
+      - postgres-exporter-replica-2
     networks:
       - postgres
-      - social_network
 
   node-exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter:v1.8.2
     container_name: monitoring_node_exporter
     restart: unless-stopped
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     expose:
       - 9100
     networks:
       - postgres
-      - social_network
 
   alertmanager:
     image: prom/alertmanager
@@ -208,32 +267,37 @@ services:
       - '--storage.path=/alertmanager'
     networks:
       - postgres
-      - social_network
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
     container_name: monitoring_cadvisor
     restart: unless-stopped
+    privileged: true
+    command:
+      - -docker_only=true
+      - -housekeeping_interval=10s
+      - -port=8080
     volumes:
       - /:/rootfs:ro
-      - /var/run:/var/run:rw
+      - /var/run:/var/run:ro
       - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     expose:
-      - 9080
+      - 8080
     networks:
       - postgres
-      - social_network
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.5.2
     container_name: monitoring_grafana
     restart: unless-stopped
-    links:
-      - prometheus:prometheus
+    depends_on:
+      - prometheus
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./compose-configuration/monitoring/grafana/provisioning:/var/lib/grafana/provisioning
+      - ./compose-configuration/monitoring/grafana/provisioning:/etc/grafana/provisioning
     environment:
       GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
       GF_AUTH_ANONYMOUS_ENABLED: "true"
@@ -242,7 +306,6 @@ services:
       GF_AUTH_DISABLE_LOGIN_FORM: "true"
     networks:
       - postgres
-      - social_network
     ports:
       - 3000:3000
 

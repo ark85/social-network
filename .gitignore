@@ -37,3 +37,5 @@ build/
 
 .env
 
+prometheus-data/
+grafana_data/
