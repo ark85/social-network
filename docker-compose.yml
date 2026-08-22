@@ -119,10 +119,12 @@ services:
     ports:
       - "5432:5432"
       - "5433:5433"
+      - "8404:8404"
 
     expose:
       - 5432
       - 5433
+      - 8404
 
   backend:
     build:
@@ -226,12 +228,12 @@ services:
     depends_on:
       - cadvisor
       - node-exporter
-      - alertmanager
       - postgres-exporter-master
       - postgres-exporter-replica-1
       - postgres-exporter-replica-2
     networks:
       - postgres
+      - social_network
 
   node-exporter:
     image: prom/node-exporter:v1.8.2
@@ -252,31 +254,16 @@ services:
     networks:
       - postgres
 
-  alertmanager:
-    image: prom/alertmanager
-    container_name: monitoring_alertmanager
-    ports:
-      - 9093:9093
-    expose:
-      - 9093
-    volumes:
-      - ./compose-configuration/monitoring/alertmanager/:/etc/alertmanager/
-    restart: always
-    command:
-      - '--config.file=/etc/alertmanager/config.yml'
-      - '--storage.path=/alertmanager'
-    networks:
-      - postgres
-
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    image: gcr.io/cadvisor/cadvisor:v0.54.1
     container_name: monitoring_cadvisor
     restart: unless-stopped
     privileged: true
     command:
       - -docker_only=true
-      - -housekeeping_interval=10s
+      - -housekeeping_interval=1s
       - -port=8080
+      - -disable_metrics=disk
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -304,6 +291,7 @@ services:
       GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
       GF_AUTH_DISABLE_SIGNOUT_MENU: "true"
       GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_DASHBOARDS_MIN_REFRESH_INTERVAL: 1s
     networks:
       - postgres
     ports:

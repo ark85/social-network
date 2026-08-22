@@ -1,6 +1,7 @@
 global:
-  scrape_interval: 15s
-  evaluation_interval: 15s
+  scrape_interval: 1s
+  scrape_timeout: 800ms
+  evaluation_interval: 1s
   external_labels:
     monitor: social_network
 
@@ -34,3 +35,12 @@ scrape_configs:
     relabel_configs:
       - source_labels: [db_instance]
         target_label: instance
+
+  - job_name: haproxy
+    static_configs:
+      - targets: ["haproxy:8404"]
+
+  - job_name: backend
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["backend:8080"]
