@@ -18,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -40,11 +41,13 @@ public class UserService implements UserDetailsService {
     private final PasswordEncoder passwordEncoder;
     private final ImportProperties importProperties;
 
+    @Transactional(readOnly = true)
     @Override
     public @NullMarked UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return getUserById(UUID.fromString(username));
     }
 
+    @Transactional(readOnly = true)
     public User getUserById(UUID id) {
         User user = userRepository.getUserById(id);
         if (user == null) {
@@ -53,6 +56,7 @@ public class UserService implements UserDetailsService {
         return user;
     }
 
+    @Transactional
     public UserCreateResponse registerUser(UserCreateRequest userCreateRequest) {
         User user = new User(userCreateRequest);
         String passwordHash = passwordEncoder.encode(userCreateRequest.getPassword());
@@ -60,12 +64,14 @@ public class UserService implements UserDetailsService {
         return new UserCreateResponse(userRepository.createUser(user));
     }
 
+    @Transactional(readOnly = true)
     public List<UserGetResponse> searchUsersByFirstNameAndSecondName(
             @NotBlank String firstName, @NotBlank String secondName) {
         List<User> users = userRepository.searchUsersByFirstNameAndSecondName(firstName, secondName);
         return users.stream().map(UserGetResponse::new).toList();
     }
 
+    @Transactional
     public void importUsers(MultipartFile usersFile) throws IOException {
         log.info("Start importUsers with batchSize = {}", importProperties.getBatchSize());
         List<User> usersToCreate = new ArrayList<>(importProperties.getBatchSize());

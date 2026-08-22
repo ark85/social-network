@@ -9,6 +9,8 @@ RUN mvn -U clean package -DskipTests
 
 FROM eclipse-temurin:26-jre
 
+RUN apt-get update && apt-get install -y curl
+
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
