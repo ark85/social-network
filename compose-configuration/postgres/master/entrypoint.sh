@@ -56,6 +56,8 @@ if [ ! -f "$BASEBACKUP_DIR/PG_VERSION" ]; then
   mkdir -p $BASEBACKUP_DIR
   PGPASSWORD="$POSTGRES_REPLICATION_PASSWORD" pg_basebackup \
       -h ${POSTGRES_HOST} -D $BASEBACKUP_DIR -U ${POSTGRES_REPLICATION_USER} -v -P --wal-method=stream
+  # removes include of postres-master.conf
+  sed -i "\|^${POSTGRES_MASTER_CONFIG}$|d" $BASEBACKUP_DIR/postgresql.conf
 fi
 
 kill "$POSTGRES_PID"
