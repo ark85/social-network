@@ -1,0 +1,29 @@
+name: ${PATRONI_NAME}
+
+etcd3:
+  hosts: ${ETCD_NAME}:2379
+
+restapi:
+  listen: 0.0.0.0:8008
+  connect_address: ${PATRONI_NAME}:8008
+
+bootstrap:
+  dcs:
+    postgresql:
+      parameters:
+        synchronous_mode: quorum
+        synchronous_node_count: 1
+  pg_hba:
+    - host replication ${POSTGRES_REPLICATION_USER} ${POSTGRES_SUBNET} scram-sha-256
+
+postgresql:
+  listen: 0.0.0.0:5432
+  connect_address: ${PATRONI_NAME}:5432
+  data_dir: ${PGDATA}
+  authentication:
+    superuser:
+      username: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+    replication:
+      username: ${POSTGRES_REPLICATION_USER}
+      password: ${POSTGRES_REPLICATION_PASSWORD}
