@@ -15,14 +15,20 @@ bootstrap:
   dcs:
     synchronous_mode: quorum
     synchronous_node_count: 1
-  pg_hba:
-    - host replication ${POSTGRES_REPLICATION_USER} ${POSTGRES_SUBNET} scram-sha-256
-    - host all all ${POSTGRES_SUBNET} scram-sha-256
 
 postgresql:
   listen: 0.0.0.0:5432
   connect_address: ${PATRONI_NAME}:5432
   data_dir: ${PGDATA}
+  pg_hba:
+    - local   all             all                                     trust
+    - host    all             all             127.0.0.1/32            trust
+    - host    all             all             ::1/128                 trust
+    - local   replication     all                                     trust
+    - host    replication     all             127.0.0.1/32            trust
+    - host    replication     all             ::1/128                 trust
+    - host all all all scram-sha-256
+    - host replication ${POSTGRES_REPLICATION_USER} ${POSTGRES_SUBNET} scram-sha-256
   authentication:
     superuser:
       username: ${POSTGRES_USER}
