@@ -1,5 +1,7 @@
 x-postgres-common: &postgres-common
   build: ./compose-configuration/postgres
+  cpus: "1.0"
+  mem_limit: 1g
   networks:
     - postgres
   depends_on:
