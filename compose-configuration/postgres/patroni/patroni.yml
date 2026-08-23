@@ -1,7 +1,11 @@
+scope: postgres-cluster
+namespace: service
+
 name: ${PATRONI_NAME}
 
 etcd3:
-  hosts: ${ETCD_NAME}:2379
+  hosts:
+    - ${ETCD_NAME}:2379
 
 restapi:
   listen: 0.0.0.0:8008
