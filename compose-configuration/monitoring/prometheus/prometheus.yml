@@ -20,18 +20,15 @@ scrape_configs:
 
   - job_name: postgres
     static_configs:
-      - targets: ["postgres-exporter-master:9187"]
+      - targets: ["postgres-exporter-1:9187"]
         labels:
-          db_instance: postgres-master
-          role: master
-      - targets: ["postgres-exporter-replica-1:9187"]
+          db_instance: postgres-1
+      - targets: ["postgres-exporter-2:9187"]
         labels:
-          db_instance: postgres-replica-1
-          role: replica
-      - targets: ["postgres-exporter-replica-2:9187"]
+          db_instance: postgres-2
+      - targets: ["postgres-exporter-3:9187"]
         labels:
-          db_instance: postgres-replica-2
-          role: replica
+          db_instance: postgres-3
     relabel_configs:
       - source_labels: [db_instance]
         target_label: instance
