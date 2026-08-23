@@ -19,6 +19,7 @@ bootstrap:
         synchronous_node_count: 1
   pg_hba:
     - host replication ${POSTGRES_REPLICATION_USER} ${POSTGRES_SUBNET} scram-sha-256
+    - host all all ${POSTGRES_SUBNET} scram-sha-256
 
 postgresql:
   listen: 0.0.0.0:5432

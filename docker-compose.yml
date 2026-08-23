@@ -1,3 +1,19 @@
+x-postgres-common: &postgres-common
+  build: ./compose-configuration/postgres
+  networks:
+    - postgres
+  depends_on:
+    etcd:
+      condition: service_healthy
+
+x-postgres-environment: &postgres-environment
+  POSTGRES_DB: ${SOCIAL_NETWORK_DB_NAME}
+  POSTGRES_USER: ${SOCIAL_NETWORK_DB_USERNAME}
+  POSTGRES_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
+  POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
+  POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+  ETCD_NAME: etcd
+
 services:
   etcd:
     image: quay.io/coreos/etcd:v3.5.26
@@ -17,42 +33,26 @@ services:
     networks:
       - postgres
 
-  postgres-1: &postgres
-    build: ./compose-configuration/postgres
-
+  postgres-1:
+    <<: *postgres-common
     environment:
-      POSTGRES_DB: ${SOCIAL_NETWORK_DB_NAME}
-      POSTGRES_USER: ${SOCIAL_NETWORK_DB_USERNAME}
-      POSTGRES_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
-      POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
-      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+      <<: *postgres-environment
       PATRONI_NAME: postgres-1
-      ETCD_NAME: etcd
-
-    networks:
-      - postgres
-
     volumes:
       - postgres_data:/var/lib/postgresql
-
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://postgres-1:8008/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
 
-    depends_on:
-      etcd:
-        condition: service_healthy
-
   postgres-2:
-    <<: *postgres
-
+    <<: *postgres-common
     environment:
+      <<: *postgres-environment
       PATRONI_NAME: postgres-2
     volumes:
       - postgres_2_data:/var/lib/postgresql
-
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://postgres-2:8008/health || exit 1" ]
       interval: 10s
@@ -60,13 +60,12 @@ services:
       retries: 5
 
   postgres-3:
-    <<: *postgres
-
+    <<: *postgres-common
     environment:
+      <<: *postgres-environment
       PATRONI_NAME: postgres-3
     volumes:
       - postgres_3_data:/var/lib/postgresql
-
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://postgres-3:8008/health || exit 1" ]
       interval: 10s

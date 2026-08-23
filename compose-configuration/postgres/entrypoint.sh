@@ -24,4 +24,4 @@ export POSTGRES_SUBNET="${SUBNET}"
 
 envsubst < /tmp/patroni.yml > /etc/patroni/patroni.yml
 
-exec patroni /etc/patroni/patroni.yml
+exec gosu postgres patroni /etc/patroni/patroni.yml
