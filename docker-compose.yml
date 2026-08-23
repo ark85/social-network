@@ -151,7 +151,6 @@ services:
 
   postgres-exporter-1:
     image: prometheuscommunity/postgres-exporter:v0.17.1
-    container_name: monitoring_postgres_exporter_1
     restart: unless-stopped
     environment:
       DATA_SOURCE_URI: postgres-1:5432/${SOCIAL_NETWORK_DB_NAME}?sslmode=disable
@@ -167,7 +166,6 @@ services:
 
   postgres-exporter-2:
     image: prometheuscommunity/postgres-exporter:v0.17.1
-    container_name: monitoring_postgres_exporter_2
     restart: unless-stopped
     environment:
       DATA_SOURCE_URI: postgres-2:5432/${SOCIAL_NETWORK_DB_NAME}?sslmode=disable
@@ -183,7 +181,6 @@ services:
 
   postgres-exporter-3:
     image: prometheuscommunity/postgres-exporter:v0.17.1
-    container_name: monitoring_postgres_exporter_3
     restart: unless-stopped
     environment:
       DATA_SOURCE_URI: postgres-3:5432/${SOCIAL_NETWORK_DB_NAME}?sslmode=disable
@@ -199,7 +196,6 @@ services:
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: monitoring_prometheus
     restart: unless-stopped
     volumes:
       - ./compose-configuration/monitoring/prometheus:/etc/prometheus
@@ -223,7 +219,6 @@ services:
 
   node-exporter:
     image: prom/node-exporter:v1.8.2
-    container_name: monitoring_node_exporter
     restart: unless-stopped
     pid: host
     volumes:
@@ -242,7 +237,6 @@ services:
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.54.1
-    container_name: monitoring_cadvisor
     restart: unless-stopped
     privileged: true
     command:
@@ -264,7 +258,6 @@ services:
 
   grafana:
     image: grafana/grafana:11.5.2
-    container_name: monitoring_grafana
     restart: unless-stopped
     depends_on:
       - prometheus
