@@ -17,7 +17,7 @@ echo "Postgres subnet: ${SUBNET}"
 
 if [ -f "${PGDATA}/pg_hba.conf" ]; then
     REPLICATION_RULE_START="host replication ${POSTGRES_REPLICATION_USER}"
-    sed -i "\|^${REPLICATION_RULE}|d" ${PGDATA}/pg_hba.conf
+    sed -i "\|^${REPLICATION_RULE_START}|d" ${PGDATA}/pg_hba.conf
 fi
 
 export POSTGRES_SUBNET="${SUBNET}"
