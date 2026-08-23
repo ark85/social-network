@@ -43,13 +43,13 @@
               }
             ]
           },
-          "unit": "reqps"
+          "unit": "suffix:req/s"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
+        "w": 3,
         "x": 0,
         "y": 1
       },
@@ -118,8 +118,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 4,
+        "w": 3,
+        "x": 3,
         "y": 1
       },
       "id": 3,
@@ -187,8 +187,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 8,
+        "w": 3,
+        "x": 6,
         "y": 1
       },
       "id": 4,
@@ -246,14 +246,14 @@
               }
             ]
           },
-          "unit": "reqps"
+          "unit": "suffix:req/s"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 12,
+        "w": 3,
+        "x": 9,
         "y": 1
       },
       "id": 5,
@@ -313,8 +313,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 16,
+        "w": 3,
+        "x": 12,
         "y": 1
       },
       "id": 6,
@@ -374,8 +374,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 20,
+        "w": 3,
+        "x": 15,
         "y": 1
       },
       "id": 7,
@@ -407,6 +407,75 @@
         }
       ],
       "title": "Hikari write",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(http_server_requests_seconds_count{method=~\"POST|PUT|PATCH|DELETE\",status=~\"5..\"}[$__range])) or vector(0)",
+          "legendFormat": "failed writes",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Failed writes",
       "type": "stat"
     },
     {
@@ -460,7 +529,7 @@
               }
             ]
           },
-          "unit": "reqps"
+          "unit": "suffix:req/s"
         },
         "overrides": []
       },
@@ -560,8 +629,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 13
+        "x": 12,
+        "y": 5
       },
       "id": 12,
       "options": {
@@ -586,13 +655,13 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (le, uri) (rate(http_server_requests_seconds_bucket[1m]))",
+          "expr": "histogram_quantile(1, sum by (le, uri) (rate(http_server_requests_seconds_bucket[1m])))",
           "legendFormat": "{{uri}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "HTTP Throughput by URI",
+      "title": "HTTP max by URI",
       "type": "timeseries"
     },
     {
@@ -653,7 +722,7 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
+        "x": 0,
         "y": 13
       },
       "id": 13,
@@ -708,6 +777,110 @@
         }
       ],
       "title": "Hikari pool",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "suffix:req/s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(http_server_requests_seconds_count{method=~\"POST|PUT|PATCH|DELETE\",status=~\"5..\"}[1m])) or vector(0)",
+          "legendFormat": "HTTP 5xx writes",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(hikaricp_connections_timeout_total{pool=\"write\"}[1m])) or vector(0)",
+          "legendFormat": "Hikari write timeouts",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Failed writes /s",
       "type": "timeseries"
     },
     {
@@ -774,7 +947,7 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "suffix:/s"
         },
         "overrides": []
       },
@@ -813,7 +986,7 @@
           "refId": "A"
         }
       ],
-      "title": "Read sessions per seconds",
+      "title": "Sessions /s",
       "type": "timeseries"
     },
     {
@@ -906,7 +1079,7 @@
           "refId": "A"
         }
       ],
-      "title": "Read sessions",
+      "title": "Sessions",
       "type": "timeseries"
     },
     {
@@ -960,7 +1133,7 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "suffix:/s"
         },
         "overrides": []
       },
@@ -1021,7 +1194,7 @@
           "refId": "C"
         }
       ],
-      "title": "HAProxy read errors per second",
+      "title": "Errors /s",
       "type": "timeseries"
     },
     {
@@ -1030,9 +1203,9 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 21
+        "y": 38
       },
-      "id": 20,
+      "id": 24,
       "panels": [],
       "title": "HAProxy write",
       "type": "row"
@@ -1088,7 +1261,7 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "suffix:/s"
         },
         "overrides": []
       },
@@ -1096,9 +1269,9 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 22
+        "y": 39
       },
-      "id": 21,
+      "id": 25,
       "options": {
         "legend": {
           "calcs": [
@@ -1127,7 +1300,7 @@
           "refId": "A"
         }
       ],
-      "title": "Write sessions per seconds",
+      "title": "Sessions /s",
       "type": "timeseries"
     },
     {
@@ -1189,9 +1362,9 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 22
+        "y": 39
       },
-      "id": 22,
+      "id": 26,
       "options": {
         "legend": {
           "calcs": [
@@ -1220,7 +1393,7 @@
           "refId": "A"
         }
       ],
-      "title": "Write sessions",
+      "title": "Sessions",
       "type": "timeseries"
     },
     {
@@ -1274,7 +1447,7 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "suffix:/s"
         },
         "overrides": []
       },
@@ -1282,9 +1455,9 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 30
+        "y": 47
       },
-      "id": 23,
+      "id": 27,
       "options": {
         "legend": {
           "calcs": [
@@ -1335,7 +1508,185 @@
           "refId": "C"
         }
       ],
-      "title": "HAProxy write errors per second",
+      "title": "Errors /s",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 20,
+        "y": 47
+      },
+      "id": 29,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(haproxy_server_connection_errors_total{proxy=\"postgres_primary\"}[$__range])) or vector(0)",
+          "instant": true,
+          "legendFormat": "conn",
+          "range": false,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(increase(haproxy_server_response_errors_total{proxy=\"postgres_primary\"}[$__range])) or vector(0)",
+          "instant": true,
+          "legendFormat": "resp",
+          "range": false,
+          "refId": "B"
+        }
+      ],
+      "title": "Write errors",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 12,
+        "y": 47
+      },
+      "id": 28,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "haproxy_server_status{proxy=\"postgres_primary\",state=\"UP\"}",
+          "legendFormat": "{{server}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Primary UP",
       "type": "timeseries"
     },
     {
@@ -1344,7 +1695,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 55
       },
       "id": 30,
       "panels": [],
@@ -1410,7 +1761,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 39
+        "y": 56
       },
       "id": 31,
       "options": {
@@ -1441,7 +1792,7 @@
           "refId": "A"
         }
       ],
-      "title": "Backends",
+      "title": "Connections",
       "type": "timeseries"
     },
     {
@@ -1495,7 +1846,7 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "suffix:/s"
         },
         "overrides": []
       },
@@ -1503,7 +1854,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 39
+        "y": 56
       },
       "id": 32,
       "options": {
@@ -1588,7 +1939,7 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "suffix:/s"
         },
         "overrides": []
       },
@@ -1596,7 +1947,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 47
+        "y": 64
       },
       "id": 33,
       "options": {
@@ -1627,7 +1978,7 @@
           "refId": "A"
         }
       ],
-      "title": "Tuples returned /s",
+      "title": "Rows scanned /s",
       "type": "timeseries"
     },
     {
@@ -1681,7 +2032,7 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "suffix:/s"
         },
         "overrides": []
       },
@@ -1689,7 +2040,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 47
+        "y": 64
       },
       "id": 34,
       "options": {
@@ -1720,7 +2071,7 @@
           "refId": "A"
         }
       ],
-      "title": "Tuples fetched /s",
+      "title": "Index rows /s",
       "type": "timeseries"
     },
     {
@@ -1782,7 +2133,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 55
+        "y": 72
       },
       "id": 35,
       "options": {
@@ -1875,7 +2226,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 55
+        "y": 72
       },
       "id": 36,
       "options": {
@@ -1960,7 +2311,7 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "suffix:/s"
         },
         "overrides": []
       },
@@ -1968,7 +2319,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 63
+        "y": 80
       },
       "id": 37,
       "options": {
@@ -2053,7 +2404,7 @@
               }
             ]
           },
-          "unit": "ops"
+          "unit": "suffix:/s"
         },
         "overrides": []
       },
@@ -2061,7 +2412,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 63
+        "y": 80
       },
       "id": 38,
       "options": {
@@ -2101,7 +2452,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 71
+        "y": 88
       },
       "id": 40,
       "panels": [],
@@ -2167,7 +2518,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 72
+        "y": 89
       },
       "id": 41,
       "options": {
@@ -2260,7 +2611,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 72
+        "y": 89
       },
       "id": 42,
       "options": {
@@ -2335,6 +2686,6 @@
   "timezone": "browser",
   "title": "Replicas",
   "uid": "replicas-performance",
-  "version": 1,
+  "version": 5,
   "weekStart": ""
 }
