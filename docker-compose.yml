@@ -1,101 +1,94 @@
-services:
-  postgres-master:
-    build: ./compose-configuration/postgres/master
-    container_name: social-network-postgres-master
+x-postgres-common: &postgres-common
+  build: ./compose-configuration/postgres
+  cpus: "1.0"
+  mem_limit: 1g
+  networks:
+    - postgres
+  depends_on:
+    etcd:
+      condition: service_healthy
 
+x-postgres-environment: &postgres-environment
+  POSTGRES_DB: ${SOCIAL_NETWORK_DB_NAME}
+  POSTGRES_USER: ${SOCIAL_NETWORK_DB_USERNAME}
+  POSTGRES_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
+  POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
+  POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+  ETCD_NAME: etcd
+
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.26
     environment:
-      POSTGRES_DB: ${SOCIAL_NETWORK_DB_NAME}
-      POSTGRES_USER: ${SOCIAL_NETWORK_DB_USERNAME}
-      POSTGRES_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
-      POSTGRES_HOST: postgres-master
-      POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
-      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
+      ETCD_LISTEN_PEER_URLS: http://0.0.0.0:2380
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: http://etcd:2380
+      ETCD_INITIAL_CLUSTER: default=http://etcd:2380
+
+    healthcheck:
+      test: [ "CMD", "etcdctl", "endpoint", "health", "--endpoints=http://etcd:2379" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
     networks:
       - postgres
 
+  postgres-1:
+    <<: *postgres-common
+    environment:
+      <<: *postgres-environment
+      PATRONI_NAME: postgres-1
     volumes:
       - postgres_data:/var/lib/postgresql
-      - postgres_basebackup:/var/lib/postgresql/basebackup
-
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d \"$${POSTGRES_DB}\" -U \"$${POSTGRES_USER}\"" ]
+      test: [ "CMD-SHELL", "curl -f http://postgres-1:8008/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    expose:
+      - 5432
 
-  postgres-replica-1:
-    build: ./compose-configuration/postgres/replica
-    container_name: social-network-postgres-replica-1
-    cpus: "1.0"
-    mem_limit: 1g
-
+  postgres-2:
+    <<: *postgres-common
     environment:
-      POSTGRES_DB: ${SOCIAL_NETWORK_DB_NAME}
-      POSTGRES_USER: ${SOCIAL_NETWORK_DB_USERNAME}
-      POSTGRES_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
-      POSTGRES_MASTER_HOST: postgres-master
-      POSTGRES_MASTER_PORT: 5432
-      POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
-      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
-      REPLICA_NAME: postgres-replica-1
-
-    depends_on:
-      postgres-master:
-        condition: service_healthy
-
-    networks:
-      - postgres
-
+      <<: *postgres-environment
+      PATRONI_NAME: postgres-2
     volumes:
-      - postgres_replica_1_data:/var/lib/postgresql
-      - postgres_basebackup:/var/lib/postgresql/basebackup:ro
-
+      - postgres_2_data:/var/lib/postgresql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d \"$${POSTGRES_DB}\" -U \"$${POSTGRES_USER}\"" ]
+      test: [ "CMD-SHELL", "curl -f http://postgres-2:8008/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    expose:
+      - 5432
 
-  postgres-replica-2:
-    build: ./compose-configuration/postgres/replica
-    container_name: social-network-postgres-replica-2
-    cpus: "1.0"
-    mem_limit: 1g
-
+  postgres-3:
+    <<: *postgres-common
     environment:
-      POSTGRES_DB: ${SOCIAL_NETWORK_DB_NAME}
-      POSTGRES_USER: ${SOCIAL_NETWORK_DB_USERNAME}
-      POSTGRES_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
-      POSTGRES_MASTER_HOST: postgres-master
-      POSTGRES_MASTER_PORT: 5432
-      POSTGRES_REPLICATION_USER: ${REPLICATION_USER}
-      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
-      REPLICA_NAME: postgres-replica-2
-
-    depends_on:
-      postgres-master:
-        condition: service_healthy
-
-    networks:
-      - postgres
-
+      <<: *postgres-environment
+      PATRONI_NAME: postgres-3
     volumes:
-      - postgres_replica_2_data:/var/lib/postgresql
-      - postgres_basebackup:/var/lib/postgresql/basebackup:ro
-
+      - postgres_3_data:/var/lib/postgresql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -d \"$${POSTGRES_DB}\" -U \"$${POSTGRES_USER}\"" ]
+      test: [ "CMD-SHELL", "curl -f http://postgres-3:8008/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
+    expose:
+      - 5432
 
   haproxy:
     build: ./compose-configuration/haproxy
-    container_name: social-network-haproxy
 
     depends_on:
-      postgres-master:
+      postgres-1:
+        condition: service_healthy
+      postgres-2:
+        condition: service_healthy
+      postgres-3:
         condition: service_healthy
 
     networks:
@@ -114,16 +107,23 @@ services:
     ports:
       - "5432:5432"
       - "5433:5433"
+      - "8404:8404"
+
+    expose:
+      - 5432
+      - 5433
+      - 8404
 
   backend:
     build:
       context: .
       dockerfile: Dockerfile
 
-    container_name: social-network-backend
-
     ports:
       - "8080:8080"
+
+    expose:
+      - 8080
 
     environment:
       SOCIAL_NETWORK_READ_DB_URL: ${SOCIAL_NETWORK_READ_DB_URL}
@@ -147,11 +147,143 @@ services:
       timeout: 5s
       retries: 10
 
+  # ----------- monitoring start -------------
+
+  postgres-exporter-1:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_URI: postgres-1:5432/${SOCIAL_NETWORK_DB_NAME}?sslmode=disable
+      DATA_SOURCE_USER: ${SOCIAL_NETWORK_DB_USERNAME}
+      DATA_SOURCE_PASS: ${SOCIAL_NETWORK_DB_PASSWORD}
+    expose:
+      - 9187
+    networks:
+      - postgres
+    depends_on:
+      postgres-1:
+        condition: service_healthy
+
+  postgres-exporter-2:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_URI: postgres-2:5432/${SOCIAL_NETWORK_DB_NAME}?sslmode=disable
+      DATA_SOURCE_USER: ${SOCIAL_NETWORK_DB_USERNAME}
+      DATA_SOURCE_PASS: ${SOCIAL_NETWORK_DB_PASSWORD}
+    expose:
+      - 9187
+    networks:
+      - postgres
+    depends_on:
+      postgres-2:
+        condition: service_healthy
+
+  postgres-exporter-3:
+    image: prometheuscommunity/postgres-exporter:v0.17.1
+    restart: unless-stopped
+    environment:
+      DATA_SOURCE_URI: postgres-3:5432/${SOCIAL_NETWORK_DB_NAME}?sslmode=disable
+      DATA_SOURCE_USER: ${SOCIAL_NETWORK_DB_USERNAME}
+      DATA_SOURCE_PASS: ${SOCIAL_NETWORK_DB_PASSWORD}
+    expose:
+      - 9187
+    networks:
+      - postgres
+    depends_on:
+      postgres-3:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    volumes:
+      - ./compose-configuration/monitoring/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    expose:
+      - 9090
+    ports:
+      - 9090:9090
+    depends_on:
+      - cadvisor
+      - node-exporter
+      - postgres-exporter-1
+      - postgres-exporter-2
+      - postgres-exporter-3
+    networks:
+      - postgres
+      - social_network
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    restart: unless-stopped
+    pid: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - 9100
+    networks:
+      - postgres
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.54.1
+    restart: unless-stopped
+    privileged: true
+    command:
+      - -docker_only=true
+      - -housekeeping_interval=1s
+      - -port=8080
+      - -disable_metrics=disk
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+      - /dev/disk:/dev/disk:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    expose:
+      - 8080
+    networks:
+      - postgres
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./compose-configuration/monitoring/grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_AUTH_DISABLE_SIGNOUT_MENU: "true"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_DASHBOARDS_MIN_REFRESH_INTERVAL: 1s
+    networks:
+      - postgres
+    ports:
+      - 3000:3000
+
+  # ----------- monitoring end -------------
+
 volumes:
   postgres_data:
-  postgres_replica_1_data:
-  postgres_replica_2_data:
-  postgres_basebackup:
+  postgres_2_data:
+  postgres_3_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   postgres:
