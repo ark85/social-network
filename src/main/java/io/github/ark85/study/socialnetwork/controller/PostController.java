@@ -21,12 +21,14 @@ public class PostController {
     private final PostService postService;
 
     @GetMapping(path = "/feed")
-    public ResponseEntity<List<PostGetResponse>> feedPosts() {
-        return null;
+    public ResponseEntity<List<PostGetResponse>> feedPosts(@RequestParam("offset") Integer offset,
+                                                           @RequestParam("limit") Integer limit) {
+        return ResponseEntity.ok(postService.getPosts(offset, limit));
     }
 
     @PostMapping(path = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> importPosts(@RequestParam(name = "file") MultipartFile postsFile) throws IOException {
+        postService.importPosts(postsFile);
         return ResponseEntity.ok().build();
     }
 }

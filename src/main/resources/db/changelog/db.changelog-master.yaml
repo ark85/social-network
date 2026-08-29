@@ -13,7 +13,6 @@ databaseChangeLog:
       changes:
         - sqlFile:
             path: db/changelog/v1/create_users_table.sql
-
   - changeSet:
       id: 3
       author: ark85
@@ -21,3 +20,10 @@ databaseChangeLog:
       changes:
         - sql:
             sql: CREATE INDEX IF NOT EXISTS idx_users_name ON users (first_name text_pattern_ops, second_name text_pattern_ops);
+  - changeSet:
+      id: 4
+      author: ark85
+      comment: posts table creation
+      changes:
+        - sqlFile:
+            path: db/changelog/v1/create_posts_table.sql
