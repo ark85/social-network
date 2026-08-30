@@ -35,6 +35,26 @@ public class PostRepository {
                 new PostRowMapper(), offset, limit);
     }
 
+    public List<Post> getPosts(int limit) {
+        return this.jdbcTemplate.query(
+                "SELECT * FROM posts ORDER BY creation_date_time LIMIT ?",
+                new PostRowMapper(), limit);
+    }
+
+    public UUID createPost(Post post) {
+        return this.jdbcTemplate.queryForObject(
+                "INSERT INTO posts (text, creation_date_time) VALUES (?, ?) RETURNING id",
+                UUID.class, post.getText(), post.getCreationDateTime());
+    }
+
+    public int updatePost(UUID postId, String postText) {
+        return this.jdbcTemplate.update("UPDATE posts SET text = ? WHERE id = ?", postText, postId);
+    }
+
+    public int deletePost(UUID id) {
+        return this.jdbcTemplate.update("DELETE FROM posts WHERE id = ?", id);
+    }
+
     public void createAll(List<String> posts) {
         this.jdbcTemplate.batchUpdate(
                 "INSERT INTO posts (text, creation_date_time) VALUES " +
