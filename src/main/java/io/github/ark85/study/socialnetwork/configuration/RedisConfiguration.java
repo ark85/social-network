@@ -74,7 +74,8 @@ public class RedisConfiguration {
                     RedisStreamsConstants.CONSUMER_GROUP
             );
         } catch (RedisSystemException exception) {
-            if (exception.getMessage() != null && exception.getMessage().contains("BUSYGROUP")) {
+            String message = exception.getMostSpecificCause().getMessage();
+            if (message != null && message.contains("BUSYGROUP")) {
                 log.info("Consumer group {} already exists.", RedisStreamsConstants.CONSUMER_GROUP);
                 return;
             }
