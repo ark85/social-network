@@ -29,30 +29,38 @@ public class PostCacheService {
     }
 
     public void addPostEventIntoStream(PostEventType postEventType, Post post) {
-        redisTemplate.opsForStream().add(
+        var recordId = redisTemplate.opsForStream().add(
                 StreamRecords.newRecord()
                         .in(RedisStreamsConstants.POST_EVENTS)
                         .ofObject(new PostEvent(postEventType, post))
         );
+        log.debug("Published {} event to stream {} with id {}",
+                postEventType, RedisStreamsConstants.POST_EVENTS, recordId);
     }
 
     public void rebuildCache(List<Post> posts) {
         redisTemplate.delete(postsCacheKey);
         redisTemplate.opsForList().rightPushAll(postsCacheKey, posts);
         redisTemplate.expire(postsCacheKey, postsCacheTimeToLive);
+        log.debug("Rebuilt cache key={} size={}", postsCacheKey, posts.size());
     }
 
     public void addPostIntoCache(Post post) {
         redisTemplate.opsForList().leftPush(postsCacheKey, post);
         redisTemplate.opsForList().trim(postsCacheKey, 0, 999);
         redisTemplate.expire(postsCacheKey, postsCacheTimeToLive);
+        log.debug("Added post {} to cache key={}", post.getId(), postsCacheKey);
     }
 
     public List<Post> getCachedPosts(int offset, int limit) {
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(postsCacheKey))) {
+            return null;
+        }
         return redisTemplate.opsForList().range(postsCacheKey, offset, offset + limit - 1);
     }
 
     public void invalidateCache() {
         redisTemplate.delete(postsCacheKey);
+        log.debug("Invalidated cache key={}", postsCacheKey);
     }
 }

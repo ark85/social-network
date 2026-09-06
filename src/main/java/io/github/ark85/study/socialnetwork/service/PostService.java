@@ -46,13 +46,17 @@ public class PostService {
         if (actualOffset + actualLimit <= 1000) {
             List<Post> cachedPosts = postCacheService.getCachedPosts(actualOffset, actualLimit);
             if (cachedPosts != null) {
+                log.debug("Feed cache hit offset={} limit={} size={}",
+                        actualOffset, actualLimit, cachedPosts.size());
                 return cachedPosts.stream().map(PostGetResponse::new).toList();
             }
+            log.debug("Feed cache miss offset={} limit={}, rebuilding", actualOffset, actualLimit);
             rebuildCache();
             return postCacheService.getCachedPosts(actualOffset, actualLimit).stream()
                     .map(PostGetResponse::new).toList();
         }
 
+        log.debug("Feed bypasses cache offset={} limit={}", actualOffset, actualLimit);
         List<Post> posts = postRepository.getPosts(actualOffset, actualLimit);
         return posts.stream().map(PostGetResponse::new).toList();
     }

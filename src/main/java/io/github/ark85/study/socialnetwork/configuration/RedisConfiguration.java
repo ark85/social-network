@@ -73,6 +73,8 @@ public class RedisConfiguration {
                     ReadOffset.latest(),
                     RedisStreamsConstants.CONSUMER_GROUP
             );
+            log.info("Created consumer group {} for stream {}",
+                    RedisStreamsConstants.CONSUMER_GROUP, RedisStreamsConstants.POST_EVENTS);
         } catch (RedisSystemException exception) {
             String message = exception.getMostSpecificCause().getMessage();
             if (message != null && message.contains("BUSYGROUP")) {
