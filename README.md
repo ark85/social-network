@@ -19,3 +19,8 @@
     * Replicate old volume `postgres_data` to replicas
   * Call `docker compose -f ./docker-compose.yml -p social-network up -d haproxy backend`
 * Next time just follow [How to start](#how-to-start)
+
+## How to add posts to test posts api
+
+* Call `/post/import` api
+  * Use multipart with key `file` and value file `posts.txt`

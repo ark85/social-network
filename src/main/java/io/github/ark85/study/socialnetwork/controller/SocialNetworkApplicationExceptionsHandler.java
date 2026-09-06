@@ -1,5 +1,6 @@
 package io.github.ark85.study.socialnetwork.controller;
 
+import io.github.ark85.study.socialnetwork.exception.PostNotFoundException;
 import io.github.ark85.study.socialnetwork.model.api.response.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -57,5 +58,10 @@ public class SocialNetworkApplicationExceptionsHandler {
         );
         return ResponseEntity.status(HttpStatus.CONTENT_TOO_LARGE)
                 .body(errorResponse);
+    }
+
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<Void> handlePostNotFoundException(PostNotFoundException ex) {
+        return ResponseEntity.notFound().build();
     }
 }
