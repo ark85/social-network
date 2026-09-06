@@ -8,6 +8,7 @@ import io.github.ark85.study.socialnetwork.model.api.request.PostCreateRequest;
 import io.github.ark85.study.socialnetwork.model.api.request.PostUpdateRequest;
 import io.github.ark85.study.socialnetwork.model.api.response.PostCreateResponse;
 import io.github.ark85.study.socialnetwork.model.api.response.PostGetResponse;
+import io.github.ark85.study.socialnetwork.model.cache.PostEventType;
 import io.github.ark85.study.socialnetwork.repository.PostRepository;
 import io.github.ark85.study.socialnetwork.service.cache.PostCacheService;
 import lombok.AllArgsConstructor;
@@ -66,7 +67,7 @@ public class PostService {
     public PostCreateResponse createPost(PostCreateRequest postCreateRequest) {
         Post post = new Post(null, postCreateRequest.getText(), LocalDateTime.now());
         UUID id = postRepository.createPost(post);
-        postCacheService.addPostIntoCache(post);
+        postCacheService.addPostEventIntoStream(PostEventType.CREATED, post);
         return new PostCreateResponse(id);
     }
 
@@ -76,7 +77,7 @@ public class PostService {
         if (updated == 0) {
             throw new PostNotFoundException(postUpdateRequest.getId());
         }
-        postCacheService.invalidateCache();
+        postCacheService.addPostEventIntoStream(PostEventType.UPDATED, null);
     }
 
     @Transactional
@@ -85,7 +86,7 @@ public class PostService {
         if (deleted == 0) {
             throw new PostNotFoundException(id);
         }
-        postCacheService.invalidateCache();
+        postCacheService.addPostEventIntoStream(PostEventType.DELETED, null);
     }
 
     @Transactional

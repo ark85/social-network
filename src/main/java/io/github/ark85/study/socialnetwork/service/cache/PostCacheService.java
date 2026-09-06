@@ -2,7 +2,11 @@ package io.github.ark85.study.socialnetwork.service.cache;
 
 import io.github.ark85.study.socialnetwork.configuration.CacheProperties;
 import io.github.ark85.study.socialnetwork.model.Post;
+import io.github.ark85.study.socialnetwork.model.cache.PostEvent;
+import io.github.ark85.study.socialnetwork.model.cache.PostEventType;
+import io.github.ark85.study.socialnetwork.utils.RedisStreamsConstants;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -22,6 +26,14 @@ public class PostCacheService {
         this.redisTemplate = redisTemplate;
         this.postsCacheKey = cacheProperties.getPostsCacheKey();
         this.postsCacheTimeToLive = Duration.ofHours(cacheProperties.getPostsCacheTimeToLiveHours());
+    }
+
+    public void addPostEventIntoStream(PostEventType postEventType, Post post) {
+        redisTemplate.opsForStream().add(
+                StreamRecords.newRecord()
+                        .in(RedisStreamsConstants.POST_EVENTS)
+                        .ofObject(new PostEvent(postEventType, post))
+        );
     }
 
     public void rebuildCache(List<Post> posts) {
