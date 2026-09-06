@@ -67,6 +67,7 @@ public class PostService {
     public PostCreateResponse createPost(PostCreateRequest postCreateRequest) {
         Post post = new Post(null, postCreateRequest.getText(), LocalDateTime.now());
         UUID id = postRepository.createPost(post);
+        post.setId(id);
         postCacheService.addPostEventIntoStream(PostEventType.CREATED, post);
         return new PostCreateResponse(id);
     }
