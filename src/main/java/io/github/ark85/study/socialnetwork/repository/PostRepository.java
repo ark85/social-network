@@ -31,13 +31,13 @@ public class PostRepository {
 
     public List<Post> getPosts(int offset, int limit) {
         return this.jdbcTemplate.query(
-                "SELECT * FROM posts ORDER BY creation_date_time OFFSET ? LIMIT ?",
+                "SELECT * FROM posts ORDER BY creation_date_time DESC OFFSET ? LIMIT ?",
                 new PostRowMapper(), offset, limit);
     }
 
     public List<Post> getPosts(int limit) {
         return this.jdbcTemplate.query(
-                "SELECT * FROM posts ORDER BY creation_date_time LIMIT ?",
+                "SELECT * FROM posts ORDER BY creation_date_time DESC LIMIT ?",
                 new PostRowMapper(), limit);
     }
 
