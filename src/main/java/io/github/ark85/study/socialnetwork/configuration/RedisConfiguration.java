@@ -4,7 +4,9 @@ import io.github.ark85.study.socialnetwork.model.Post;
 import io.github.ark85.study.socialnetwork.model.cache.PostEvent;
 import io.github.ark85.study.socialnetwork.service.cache.PostEventConsumer;
 import io.github.ark85.study.socialnetwork.utils.RedisStreamsConstants;
+import io.lettuce.core.MaintNotificationsConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.data.redis.autoconfigure.LettuceClientOptionsBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.RedisSystemException;
@@ -22,6 +24,11 @@ import java.time.Duration;
 @Configuration
 @Slf4j
 public class RedisConfiguration {
+
+    @Bean
+    public LettuceClientOptionsBuilderCustomizer disableMaintNotifications() {
+        return builder -> builder.maintNotificationsConfig(MaintNotificationsConfig.disabled());
+    }
 
     @Bean
     public RedisTemplate<String, Post> redisTemplate(RedisConnectionFactory connectionFactory) {
