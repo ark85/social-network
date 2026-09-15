@@ -34,3 +34,10 @@ databaseChangeLog:
       changes:
         - sql:
             sql: CREATE INDEX IF NOT EXISTS idx_posts_creation_date_time ON posts (creation_date_time DESC);
+  - changeSet:
+      id: 6
+      author: ark85
+      comment: dialog_messages table creation
+      changes:
+        - sqlFile:
+            path: db/changelog/v1/create_dialog_messages_table.sql
