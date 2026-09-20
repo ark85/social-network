@@ -1,4 +1,4 @@
-package io.github.ark85.study.socialnetwork.configuration;
+package io.github.ark85.study.socialnetwork.configuration.datasource;
 
 import com.zaxxer.hikari.HikariDataSource;
 import io.github.ark85.study.socialnetwork.datasource.ReplicationRoutingDataSource;

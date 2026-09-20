@@ -12,7 +12,7 @@ databaseChangeLog:
       comment: users table creation
       changes:
         - sqlFile:
-            path: db/changelog/v1/create_users_table.sql
+            path: db/changelog/regular/v1/create_users_table.sql
   - changeSet:
       id: 3
       author: ark85
@@ -26,7 +26,7 @@ databaseChangeLog:
       comment: posts table creation
       changes:
         - sqlFile:
-            path: db/changelog/v1/create_posts_table.sql
+            path: db/changelog/regular/v1/create_posts_table.sql
   - changeSet:
       id: 5
       author: ark85
@@ -34,10 +34,3 @@ databaseChangeLog:
       changes:
         - sql:
             sql: CREATE INDEX IF NOT EXISTS idx_posts_creation_date_time ON posts (creation_date_time DESC);
-  - changeSet:
-      id: 6
-      author: ark85
-      comment: dialog_messages table creation
-      changes:
-        - sqlFile:
-            path: db/changelog/v1/create_dialog_messages_table.sql
