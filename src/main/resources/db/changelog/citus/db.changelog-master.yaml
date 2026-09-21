@@ -1,27 +1,27 @@
 databaseChangeLog:
   - changeSet:
-      id: 2
+      id: 1
       author: ark85
       comment: add citus extension
       changes:
         - sql:
             sql: CREATE EXTENSION IF NOT EXISTS citus;
   - changeSet:
-      id: 3
+      id: 2
       author: ark85
       comment: dialog_messages table creation
       changes:
         - sqlFile:
             path: db/changelog/citus/v1/create_dialog_messages_table.sql
   - changeSet:
-      id: 4
+      id: 3
       author: ark85
       comment: set distributed dialog_messages table
       changes:
         - sql:
             sql: SELECT create_distributed_table('dialog_messages', 'dialog_id');
   - changeSet:
-      id: 5
+      id: 4
       author: ark85
       comment: add index for dialogs search
       changes:
