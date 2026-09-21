@@ -33,4 +33,4 @@ databaseChangeLog:
       comment: add index for dialogs search
       changes:
         - sql:
-            sql: CREATE INDEX IF NOT EXISTS idx_dialog_messages_dialog_created_at ON dialog_messages (dialog_id, created_at DESC);
+            sql: CREATE INDEX IF NOT EXISTS idx_dialog_messages_dialog_creation_date_time ON dialog_messages (dialog_id, creation_date_time DESC);
