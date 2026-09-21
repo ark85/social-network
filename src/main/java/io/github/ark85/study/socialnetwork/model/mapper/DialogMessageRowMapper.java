@@ -13,8 +13,9 @@ public class DialogMessageRowMapper implements RowMapper<DialogMessage> {
     public DialogMessage mapRow(ResultSet rs, int rowNum) throws SQLException {
         return new DialogMessage(
                 rs.getObject("id", UUID.class),
-                rs.getObject("from", UUID.class),
-                rs.getObject("to", UUID.class),
+                rs.getObject("dialog_id", UUID.class),
+                rs.getObject("from_user_id", UUID.class),
+                rs.getObject("to_user_id", UUID.class),
                 rs.getString("text"),
                 rs.getObject("creation_date_time", LocalDateTime.class)
         );

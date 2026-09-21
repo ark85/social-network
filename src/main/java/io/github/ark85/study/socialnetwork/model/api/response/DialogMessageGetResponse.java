@@ -13,15 +13,16 @@ import java.util.UUID;
 @AllArgsConstructor
 public class DialogMessageGetResponse {
     private UUID id;
-    private UUID from;
-    private UUID to;
+    private UUID dialogId;
+    private UUID fromUserId;
+    private UUID toUserId;
     private String text;
     private LocalDateTime creationDateTime;
 
     public DialogMessageGetResponse(DialogMessage dialogMessage) {
         this.id = dialogMessage.getId();
-        this.from = dialogMessage.getFrom();
-        this.to = dialogMessage.getTo();
+        this.fromUserId = dialogMessage.getFromUserId();
+        this.toUserId = dialogMessage.getToUserId();
         this.text = dialogMessage.getText();
         this.creationDateTime = dialogMessage.getCreationDateTime();
     }

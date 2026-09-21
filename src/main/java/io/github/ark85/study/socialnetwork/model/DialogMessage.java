@@ -12,8 +12,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class DialogMessage {
     private UUID id;
-    private UUID from;
-    private UUID to;
+    private UUID dialogId;
+    private UUID fromUserId;
+    private UUID toUserId;
     private String text;
     private LocalDateTime creationDateTime;
 }
