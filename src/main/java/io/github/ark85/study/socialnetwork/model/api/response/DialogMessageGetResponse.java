@@ -21,6 +21,7 @@ public class DialogMessageGetResponse {
 
     public DialogMessageGetResponse(DialogMessage dialogMessage) {
         this.id = dialogMessage.getId();
+        this.dialogId = dialogMessage.getDialogId();
         this.fromUserId = dialogMessage.getFromUserId();
         this.toUserId = dialogMessage.getToUserId();
         this.text = dialogMessage.getText();
