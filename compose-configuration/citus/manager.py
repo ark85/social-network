@@ -72,6 +72,13 @@ def register_worker_if_not_registered(connection: psycopg.Connection, worker_hos
         connection.execute("SELECT citus_add_node(%s, %s)", (worker_host, worker_port))
 
 
+def rebalance_shards(connection: psycopg.Connection) -> None:
+    """Rebalance distributed table shards across registered workers."""
+
+    logger.info("Rebalancing distributed table shards")
+    connection.execute("SELECT rebalance_table_shards()")
+
+
 def register_all_citus_workers() -> None:
     """Connect to the Citus coordinator and register all configured workers."""
 
@@ -88,6 +95,8 @@ def register_all_citus_workers() -> None:
             worker_host, worker_port = worker_node.split(":", 1)
             register_worker_if_not_registered(connection, worker_host, int(worker_port))
 
+        connection.commit()
+        rebalance_shards(connection)
         connection.commit()
 
 
