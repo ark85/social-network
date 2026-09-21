@@ -114,6 +114,67 @@ services:
       - 5433
       - 8404
 
+  citus-coordinator:
+    image: citusdata/citus:14.2.0
+    environment:
+      <<: *postgres-environment
+    ports:
+      - "55432:5432"
+    volumes:
+      - citus_coordinator_data:/var/lib/postgresql
+    networks:
+      - social_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  citus-worker-1:
+    image: citusdata/citus:14.2.0
+    environment:
+      <<: *postgres-environment
+    volumes:
+      - citus_worker_1_data:/var/lib/postgresql
+    networks:
+      - social_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  citus-worker-2:
+    image: citusdata/citus:14.2.0
+    environment:
+      <<: *postgres-environment
+    volumes:
+      - citus_worker_2_data:/var/lib/postgresql
+    networks:
+      - social_network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  citus-manager:
+    build:
+      context: ./compose-configuration/citus
+    environment:
+      <<: *postgres-environment
+      CITUS_COORDINATOR_HOST: citus-coordinator
+      CITUS_COORDINATOR_PORT: 5432
+      CITUS_WORKERS: citus-worker-1:5432,citus-worker-2:5432
+
+    depends_on:
+      - citus-coordinator
+      - citus-worker-1
+      - citus-worker-2
+
+    networks:
+      - social_network
+
   redis:
     image: redis:8
     networks:
@@ -138,6 +199,7 @@ services:
     environment:
       SOCIAL_NETWORK_READ_DB_URL: ${SOCIAL_NETWORK_READ_DB_URL}
       SOCIAL_NETWORK_WRITE_DB_URL: ${SOCIAL_NETWORK_WRITE_DB_URL}
+      SOCIAL_NETWORK_CITUS_DB_URL: ${SOCIAL_NETWORK_CITUS_DB_URL}
       SOCIAL_NETWORK_DB_USERNAME: ${SOCIAL_NETWORK_DB_USERNAME}
       SOCIAL_NETWORK_DB_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
 
@@ -151,6 +213,12 @@ services:
       haproxy:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      citus-coordinator:
+        condition: service_healthy
+      citus-worker-1:
+        condition: service_healthy
+      citus-worker-2:
         condition: service_healthy
 
     networks:
@@ -299,6 +367,9 @@ volumes:
   postgres_3_data:
   prometheus_data:
   grafana_data:
+  citus_coordinator_data:
+  citus_worker_1_data:
+  citus_worker_2_data:
 
 networks:
   postgres:
