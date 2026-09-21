@@ -17,6 +17,11 @@ databaseChangeLog:
       id: 3
       author: ark85
       comment: set distributed dialog_messages table
+      preConditions:
+        onFail: MARK_RAN
+        sqlCheck:
+          expectedResult: 0
+          sql: SELECT count(*) FROM pg_dist_partition WHERE logicalrelid = 'public.dialog_messages'::regclass
       changes:
         - sql:
             sql: SELECT create_distributed_table('dialog_messages', 'dialog_id');
