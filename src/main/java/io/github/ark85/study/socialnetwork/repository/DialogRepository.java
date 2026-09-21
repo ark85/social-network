@@ -15,16 +15,16 @@ import java.util.UUID;
 @Slf4j
 public class DialogRepository {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final JdbcTemplate citusJdbcTemplate;
 
     public DialogRepository(
-            @Qualifier("citusJdbcTemplate") JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+            @Qualifier("citusJdbcTemplate") JdbcTemplate citusJdbcTemplate) {
+        this.citusJdbcTemplate = citusJdbcTemplate;
     }
 
     @Transactional(transactionManager = "citusTransactionManager")
     public UUID createDialogMessage(DialogMessage dialogMessage) {
-        return this.jdbcTemplate.queryForObject(
+        return this.citusJdbcTemplate.queryForObject(
                 "INSERT INTO dialog_messages (dialog_id, from_user_id, to_user_id, text, creation_date_time) " +
                         "VALUES (?, ?, ?, ?, ?) returning id",
                 UUID.class,
@@ -33,7 +33,7 @@ public class DialogRepository {
     }
 
     public List<DialogMessage> getDialogMessages(UUID dialogId) {
-        return this.jdbcTemplate.query(
+        return this.citusJdbcTemplate.query(
                 "SELECT * FROM dialog_messages WHERE dialog_id = ? ORDER BY creation_date_time DESC",
                 new DialogMessageRowMapper(), dialogId);
     }

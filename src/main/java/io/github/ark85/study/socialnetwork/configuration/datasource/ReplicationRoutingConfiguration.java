@@ -33,7 +33,7 @@ public class ReplicationRoutingConfiguration {
 
     @Bean
     @Primary
-    public JdbcTemplate jdbcTemplate(@Qualifier("dataSource") DataSource dataSource) {
+    public JdbcTemplate regularJdbcTemplate(@Qualifier("dataSource") DataSource dataSource) {
         return new JdbcTemplate(dataSource);
     }
 

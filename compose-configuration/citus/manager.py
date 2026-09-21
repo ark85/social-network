@@ -42,6 +42,18 @@ def wait_until_postgres_is_ready(host: str, port: int) -> None:
             time.sleep(2)
 
 
+def connect_to_citus_node(host: str, port: int) -> psycopg.Connection:
+    """Open a connection to a Citus PostgreSQL node."""
+
+    return psycopg.connect(
+        host=host,
+        port=port,
+        dbname=DATABASE_NAME,
+        user=DATABASE_USER,
+        password=DATABASE_PASSWORD,
+    )
+
+
 def is_worker_already_registered(connection: psycopg.Connection, worker_host: str, worker_port: int) -> bool:
     """Check whether a worker is already registered in Citus."""
 
@@ -72,7 +84,7 @@ def register_worker_if_not_registered(connection: psycopg.Connection, worker_hos
         connection.execute("SELECT citus_add_node(%s, %s)", (worker_host, worker_port))
 
 
-def rebalance_shards(connection: psycopg.Connection) -> None:
+def rebalance_distributed_table_shards(connection: psycopg.Connection) -> None:
     """Rebalance distributed table shards across registered workers."""
 
     logger.info("Rebalancing distributed table shards")
@@ -82,13 +94,7 @@ def rebalance_shards(connection: psycopg.Connection) -> None:
 def register_all_citus_workers() -> None:
     """Connect to the Citus coordinator and register all configured workers."""
 
-    with psycopg.connect(
-        host=COORDINATOR_HOST,
-        port=COORDINATOR_PORT,
-        dbname=DATABASE_NAME,
-        user=DATABASE_USER,
-        password=DATABASE_PASSWORD,
-    ) as connection:
+    with connect_to_citus_node(COORDINATOR_HOST, COORDINATOR_PORT) as connection:
         connection.execute("CREATE EXTENSION IF NOT EXISTS citus")
 
         for worker_node in WORKER_NODES:
@@ -96,7 +102,7 @@ def register_all_citus_workers() -> None:
             register_worker_if_not_registered(connection, worker_host, int(worker_port))
 
         connection.commit()
-        rebalance_shards(connection)
+        rebalance_distributed_table_shards(connection)
         connection.commit()
 
 

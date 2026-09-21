@@ -31,14 +31,13 @@ public class ShardingConfiguration {
     }
 
     @Bean
-    public JdbcTemplate citusJdbcTemplate(
-            @Qualifier("citusDataSource") DataSource dataSource) {
-        return new JdbcTemplate(dataSource);
+    public JdbcTemplate citusJdbcTemplate(@Qualifier("citusDataSource") DataSource citusDataSource) {
+        return new JdbcTemplate(citusDataSource);
     }
 
     @Bean
     public PlatformTransactionManager citusTransactionManager(
-            @Qualifier("citusDataSource") DataSource dataSource) {
-        return new DataSourceTransactionManager(dataSource);
+            @Qualifier("citusDataSource") DataSource citusDataSource) {
+        return new DataSourceTransactionManager(citusDataSource);
     }
 }
