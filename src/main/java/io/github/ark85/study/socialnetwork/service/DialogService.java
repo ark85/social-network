@@ -24,7 +24,6 @@ public class DialogService {
     private final UserService userService;
     private final DialogRepository dialogRepository;
 
-    @Transactional(transactionManager = "citusTransactionManager")
     public DialogMessageSendResponse sendMessage(UUID fromUserId, UUID toUserId, String text) {
         userService.getUserById(toUserId);
         UUID dialogId = DialogUtils.generateDialogId(fromUserId, toUserId);
@@ -33,7 +32,7 @@ public class DialogService {
         return new DialogMessageSendResponse(dialogRepository.createDialogMessage(dialogMessage));
     }
 
-    @Transactional(transactionManager = "citusTransactionManager")
+    @Transactional(transactionManager = "citusTransactionManager", readOnly = true)
     public List<DialogMessageGetResponse> getDialogMessages(UUID fromUserId, UUID toUserId) {
         UUID dialogId = DialogUtils.generateDialogId(fromUserId, toUserId);
         return dialogRepository.getDialogMessages(dialogId).stream().map(DialogMessageGetResponse::new).toList();
