@@ -29,7 +29,7 @@
 
 ### Add a worker
 
-* Copy `citus-worker-3` in `docker-compose.yml` (see `citus-worker-1` and `citus-worker-2` as examples)
+* Add `citus-worker-3` in `docker-compose.yml` (see `citus-worker-1` and `citus-worker-2` as examples)
 * Add `citus-worker-3` to `citus-manager`:
   * `citus-worker-3:5432` to `CITUS_WORKERS`
   * `citus-worker-3` to `depends_on`
