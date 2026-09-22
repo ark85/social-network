@@ -12,7 +12,7 @@ databaseChangeLog:
       comment: users table creation
       changes:
         - sqlFile:
-            path: db/changelog/v1/create_users_table.sql
+            path: db/changelog/regular/v1/create_users_table.sql
   - changeSet:
       id: 3
       author: ark85
@@ -26,7 +26,7 @@ databaseChangeLog:
       comment: posts table creation
       changes:
         - sqlFile:
-            path: db/changelog/v1/create_posts_table.sql
+            path: db/changelog/regular/v1/create_posts_table.sql
   - changeSet:
       id: 5
       author: ark85

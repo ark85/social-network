@@ -2,10 +2,8 @@ package io.github.ark85.study.socialnetwork.controller;
 
 import io.github.ark85.study.socialnetwork.model.api.request.PostCreateRequest;
 import io.github.ark85.study.socialnetwork.model.api.request.PostUpdateRequest;
-import io.github.ark85.study.socialnetwork.model.api.request.UserCreateRequest;
 import io.github.ark85.study.socialnetwork.model.api.response.PostCreateResponse;
 import io.github.ark85.study.socialnetwork.model.api.response.PostGetResponse;
-import io.github.ark85.study.socialnetwork.model.api.response.UserCreateResponse;
 import io.github.ark85.study.socialnetwork.service.PostService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
