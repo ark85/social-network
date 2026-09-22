@@ -21,11 +21,10 @@ import java.util.UUID;
 @Slf4j
 public class DialogService {
 
-    private final UserService userService;
     private final DialogRepository dialogRepository;
 
+    @Transactional(transactionManager = "citusTransactionManager")
     public DialogMessageSendResponse sendMessage(UUID fromUserId, UUID toUserId, String text) {
-        userService.getUserById(toUserId);
         UUID dialogId = DialogUtils.generateDialogId(fromUserId, toUserId);
         DialogMessage dialogMessage = new DialogMessage(
                 null, dialogId, fromUserId, toUserId, text, LocalDateTime.now());

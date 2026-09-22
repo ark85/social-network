@@ -4,6 +4,7 @@ import io.github.ark85.study.socialnetwork.model.api.request.DialogMessageSendRe
 import io.github.ark85.study.socialnetwork.model.api.response.DialogMessageGetResponse;
 import io.github.ark85.study.socialnetwork.model.api.response.DialogMessageSendResponse;
 import io.github.ark85.study.socialnetwork.service.DialogService;
+import io.github.ark85.study.socialnetwork.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,11 +22,14 @@ import java.util.UUID;
 public class DialogController {
 
     private final DialogService dialogService;
+    private final UserService userService;
 
     @PostMapping(path = "/{userId}/send")
     public ResponseEntity<DialogMessageSendResponse> sendMessage(
             @PathVariable UUID userId, @RequestBody @Valid DialogMessageSendRequest dialogMessageSendRequest,
             Authentication authentication) {
+        // checks if toUser exists
+        userService.getUserById(userId);
         return ResponseEntity.ok(dialogService.sendMessage(
                 UUID.fromString(authentication.getName()), userId, dialogMessageSendRequest.getText()));
     }

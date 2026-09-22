@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,7 +21,6 @@ public class DialogRepository {
         this.citusJdbcTemplate = citusJdbcTemplate;
     }
 
-    @Transactional(transactionManager = "citusTransactionManager")
     public UUID createDialogMessage(DialogMessage dialogMessage) {
         return this.citusJdbcTemplate.queryForObject(
                 "INSERT INTO dialog_messages (dialog_id, from_user_id, to_user_id, text, creation_date_time) " +
