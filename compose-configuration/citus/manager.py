@@ -54,6 +54,16 @@ def connect_to_citus_node(host: str, port: int) -> psycopg.Connection:
     )
 
 
+def configure_coordinator_host(connection: psycopg.Connection) -> None:
+    """Tell workers how to reach the coordinator (not localhost inside a worker)."""
+
+    logger.info("Setting Citus coordinator host to %s:%s", COORDINATOR_HOST, COORDINATOR_PORT)
+    connection.execute(
+        "SELECT citus_set_coordinator_host(%s, %s)",
+        (COORDINATOR_HOST, COORDINATOR_PORT),
+    )
+
+
 def is_worker_already_registered(connection: psycopg.Connection, worker_host: str, worker_port: int) -> bool:
     """Check whether a worker is already registered in Citus."""
 
@@ -96,6 +106,8 @@ def register_all_citus_workers() -> None:
 
     with connect_to_citus_node(COORDINATOR_HOST, COORDINATOR_PORT) as connection:
         connection.execute("CREATE EXTENSION IF NOT EXISTS citus")
+        configure_coordinator_host(connection)
+        connection.commit()
 
         for worker_node in WORKER_NODES:
             worker_host, worker_port = worker_node.split(":", 1)
