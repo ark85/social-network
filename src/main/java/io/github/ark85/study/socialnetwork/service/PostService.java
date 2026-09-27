@@ -24,6 +24,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -44,7 +45,7 @@ public class PostService {
         int actualOffset = !Objects.isNull(offset) && offset >= 0 ? offset : 0;
         int actualLimit = !Objects.isNull(limit) && limit > 0 ? limit : 10;
         if (actualOffset + actualLimit <= 1000) {
-            List<Post> cachedPosts = postCacheService.getCachedPosts(actualOffset, actualLimit);
+            List<Post> cachedPosts = postCacheService.getCachedPosts(userId, actualOffset, actualLimit);
             if (cachedPosts != null) {
                 log.debug("Feed cache hit: offset={} limit={} size={}",
                         actualOffset, actualLimit, cachedPosts.size());
@@ -52,19 +53,23 @@ public class PostService {
             }
             log.debug("Feed cache miss: offset={} limit={}, rebuilding", actualOffset, actualLimit);
             rebuildCache(userId);
-            return postCacheService.getCachedPosts(actualOffset, actualLimit).stream()
-                    .map(PostGetResponse::new).toList();
+            cachedPosts = postCacheService.getCachedPosts(userId, actualOffset, actualLimit);
+            if (cachedPosts != null) {
+                return cachedPosts.stream().map(PostGetResponse::new).toList();
+            }
+            log.debug("Posts are not found for userId = {}", userId);
+            return Collections.emptyList();
         }
 
         log.debug("Feed bypasses cache: offset={} limit={}", actualOffset, actualLimit);
-        List<Post> posts = postRepository.getPosts(actualOffset, actualLimit);
+        List<Post> posts = postRepository.getUserPosts(userId, actualOffset, actualLimit);
         return posts.stream().map(PostGetResponse::new).toList();
     }
 
     @Transactional(readOnly = true)
     public void rebuildCache(UUID userId) {
-        List<Post> posts = postRepository.getPosts(cacheProperties.getCacheSize());
-        postCacheService.rebuildCache(posts);
+        List<Post> posts = postRepository.getUserPosts(userId, cacheProperties.getCacheSize());
+        postCacheService.rebuildCache(userId, posts);
     }
 
     @Transactional

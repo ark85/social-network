@@ -20,7 +20,7 @@ public class PostEventConsumer {
                 postEvent.getPostEventType(), message.getStream(), message.getId());
         switch (postEvent.getPostEventType()) {
             case CREATED -> postCacheService.addPostIntoCache(postEvent.getPost());
-            case UPDATED, DELETED -> postCacheService.invalidateCache();
+            case UPDATED, DELETED -> postCacheService.invalidateCache(postEvent.getPost().getAuthorId());
         }
     }
 }

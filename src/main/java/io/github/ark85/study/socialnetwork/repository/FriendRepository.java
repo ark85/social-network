@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,6 +17,16 @@ import java.util.UUID;
 @Slf4j
 public class FriendRepository {
     private final JdbcTemplate jdbcTemplate;
+
+    public List<UUID> getFriendIds(UUID userId) {
+        try {
+            return this.jdbcTemplate.queryForList(
+                    "SELECT friend_id FROM friends WHERE user_id = ?", UUID.class, userId);
+        } catch (EmptyResultDataAccessException ex) {
+            log.error("Friends are not found.", ex);
+            return null;
+        }
+    }
 
     public List<User> getFriends(UUID userId) {
         try {
@@ -30,9 +41,9 @@ public class FriendRepository {
 
     public void setFriend(UUID userId, UUID friendId) {
         this.jdbcTemplate.queryForObject(
-                "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)", UUID.class, userId, friendId);
+                "INSERT INTO friends (user_id, friend_id) VALUES (?, ?) RETURNING id", UUID.class, userId, friendId);
         this.jdbcTemplate.queryForObject(
-                "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)", UUID.class, friendId, userId);
+                "INSERT INTO friends (user_id, friend_id) VALUES (?, ?) RETURNING id", UUID.class, friendId, userId);
     }
 
     public void deleteFriend(UUID userId, UUID friendId) {

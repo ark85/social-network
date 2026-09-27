@@ -18,27 +18,20 @@ import java.util.UUID;
 public class PostRepository {
     private final JdbcTemplate jdbcTemplate;
 
-    public Post getPostById(UUID id) {
-        try {
-            return this.jdbcTemplate.queryForObject(
-                    "SELECT * FROM posts WHERE id = ?",
-                    new PostRowMapper(), id);
-        } catch (EmptyResultDataAccessException ex) {
-            log.error("Post is not found.", ex);
-            return null;
-        }
+    public List<Post> getUserPosts(UUID userId, int offset, int limit) {
+        return this.jdbcTemplate.query(
+                "SELECT post.* FROM friends friend_record JOIN posts post " +
+                        "ON post.author_id = friend_record.friend_id WHERE friend_record.user_id = ? " +
+                        "ORDER BY creation_date_time DESC OFFSET ? LIMIT ?",
+                new PostRowMapper(), userId, offset, limit);
     }
 
-    public List<Post> getPosts(int offset, int limit) {
+    public List<Post> getUserPosts(UUID userId, int limit) {
         return this.jdbcTemplate.query(
-                "SELECT * FROM posts ORDER BY creation_date_time DESC OFFSET ? LIMIT ?",
-                new PostRowMapper(), offset, limit);
-    }
-
-    public List<Post> getPosts(int limit) {
-        return this.jdbcTemplate.query(
-                "SELECT * FROM posts ORDER BY creation_date_time DESC LIMIT ?",
-                new PostRowMapper(), limit);
+                "SELECT post.* FROM friends friend_record JOIN posts post " +
+                        "ON post.author_id = friend_record.friend_id WHERE friend_record.user_id = ? " +
+                        "ORDER BY creation_date_time DESC LIMIT ?",
+                new PostRowMapper(), userId, limit);
     }
 
     public UUID createPost(Post post) {
