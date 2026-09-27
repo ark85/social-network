@@ -40,7 +40,7 @@ public class PostService {
     private final CacheProperties cacheProperties;
 
     @Transactional(readOnly = true)
-    public List<PostGetResponse> getPosts(Integer offset, Integer limit) {
+    public List<PostGetResponse> getFriendsPosts(UUID userId, Integer offset, Integer limit) {
         int actualOffset = !Objects.isNull(offset) && offset >= 0 ? offset : 0;
         int actualLimit = !Objects.isNull(limit) && limit > 0 ? limit : 10;
         if (actualOffset + actualLimit <= 1000) {
@@ -51,7 +51,7 @@ public class PostService {
                 return cachedPosts.stream().map(PostGetResponse::new).toList();
             }
             log.debug("Feed cache miss: offset={} limit={}, rebuilding", actualOffset, actualLimit);
-            rebuildCache();
+            rebuildCache(userId);
             return postCacheService.getCachedPosts(actualOffset, actualLimit).stream()
                     .map(PostGetResponse::new).toList();
         }
@@ -62,14 +62,14 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public void rebuildCache() {
+    public void rebuildCache(UUID userId) {
         List<Post> posts = postRepository.getPosts(cacheProperties.getCacheSize());
         postCacheService.rebuildCache(posts);
     }
 
     @Transactional
-    public PostCreateResponse createPost(PostCreateRequest postCreateRequest) {
-        Post post = new Post(null, postCreateRequest.getText(), LocalDateTime.now());
+    public PostCreateResponse createPost(UUID authorId, PostCreateRequest postCreateRequest) {
+        Post post = new Post(null, authorId, postCreateRequest.getText(), LocalDateTime.now());
         UUID id = postRepository.createPost(post);
         post.setId(id);
         postCacheService.addPostEventIntoStream(PostEventType.CREATED, post);
@@ -95,14 +95,14 @@ public class PostService {
     }
 
     @Transactional
-    public void importPosts(MultipartFile postsFile) throws IOException {
+    public void importPosts(UUID userId, MultipartFile postsFile) throws IOException {
         log.info("Start importPosts with batchSize = {}", importProperties.getBatchSize());
         try (
                 Reader reader = new InputStreamReader(postsFile.getInputStream(), StandardCharsets.UTF_8);
         ) {
             List<String> filePosts = reader.readAllLines();
             for (List<String> filePostsPartition : ListUtils.partition(filePosts, importProperties.getBatchSize())) {
-                postRepository.createAll(filePostsPartition);
+                postRepository.createAll(userId, filePostsPartition);
             }
         }
         log.info("importPosts is successfully finished");

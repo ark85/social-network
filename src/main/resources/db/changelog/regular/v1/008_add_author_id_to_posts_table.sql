@@ -1,0 +1,7 @@
+ALTER TABLE IF EXISTS posts ADD COLUMN author_id UUID;
+
+UPDATE posts SET author_id = (SELECT id FROM users LIMIT 1) WHERE author_id IS NULL;
+
+ALTER TABLE IF EXISTS posts ALTER COLUMN author_id SET NOT NULL;
+
+ALTER TABLE IF EXISTS posts ADD CONSTRAINT fk_posts_author FOREIGN KEY (author_id) REFERENCES users(id);

@@ -13,11 +13,13 @@ import java.util.UUID;
 @AllArgsConstructor
 public class PostGetResponse {
     private UUID id;
+    private UUID authorId;
     private String text;
     private LocalDateTime creationDateTime;
 
     public PostGetResponse(Post post) {
         this.id = post.getId();
+        this.authorId = post.getAuthorId();
         this.text = post.getText();
         this.creationDateTime = post.getCreationDateTime();
     }

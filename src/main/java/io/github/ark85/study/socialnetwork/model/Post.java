@@ -12,6 +12,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class Post {
     private UUID id;
+    private UUID authorId;
     private String text;
     private LocalDateTime creationDateTime;
 }

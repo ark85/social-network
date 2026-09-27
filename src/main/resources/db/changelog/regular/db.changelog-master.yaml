@@ -12,7 +12,7 @@ databaseChangeLog:
       comment: users table creation
       changes:
         - sqlFile:
-            path: db/changelog/regular/v1/create_users_table.sql
+            path: db/changelog/regular/v1/002_create_users_table.sql
   - changeSet:
       id: 3
       author: ark85
@@ -26,7 +26,7 @@ databaseChangeLog:
       comment: posts table creation
       changes:
         - sqlFile:
-            path: db/changelog/regular/v1/create_posts_table.sql
+            path: db/changelog/regular/v1/004_create_posts_table.sql
   - changeSet:
       id: 5
       author: ark85
@@ -34,3 +34,31 @@ databaseChangeLog:
       changes:
         - sql:
             sql: CREATE INDEX IF NOT EXISTS idx_posts_creation_date_time ON posts (creation_date_time DESC);
+  - changeSet:
+      id: 6
+      author: ark85
+      comment: friends table creation
+      changes:
+        - sqlFile:
+            path: db/changelog/regular/v1/006_create_friends_table.sql
+  - changeSet:
+      id: 7
+      author: ark85
+      comment: add index for friends search by user_id
+      changes:
+        - sql:
+            sql: CREATE INDEX IF NOT EXISTS idx_friends_user_id ON friends(user_id);
+  - changeSet:
+      id: 8
+      author: ark85
+      comment: add author_id to posts table
+      changes:
+        - sqlFile:
+            path: db/changelog/regular/v1/008_add_author_id_to_posts_table.sql
+  - changeSet:
+      id: 9
+      author: ark85
+      comment: add index for posts search by author_id
+      changes:
+        - sql:
+            sql: CREATE INDEX IF NOT EXISTS idx_posts_author_id ON posts(author_id);

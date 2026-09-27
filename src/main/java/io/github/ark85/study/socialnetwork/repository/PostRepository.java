@@ -43,8 +43,8 @@ public class PostRepository {
 
     public UUID createPost(Post post) {
         return this.jdbcTemplate.queryForObject(
-                "INSERT INTO posts (text, creation_date_time) VALUES (?, ?) RETURNING id",
-                UUID.class, post.getText(), post.getCreationDateTime());
+                "INSERT INTO posts (author_id, text, creation_date_time) VALUES (?, ?, ?) RETURNING id",
+                UUID.class, post.getAuthorId(), post.getText(), post.getCreationDateTime());
     }
 
     public int updatePost(UUID postId, String postText) {
@@ -55,15 +55,16 @@ public class PostRepository {
         return this.jdbcTemplate.update("DELETE FROM posts WHERE id = ?", id);
     }
 
-    public void createAll(List<String> posts) {
+    public void createAll(UUID userId, List<String> posts) {
         this.jdbcTemplate.batchUpdate(
-                "INSERT INTO posts (text, creation_date_time) VALUES " +
-                        "(?, ?)",
+                "INSERT INTO posts ( author_id, text, creation_date_time) VALUES " +
+                        "(?, ?, ?)",
                 posts,
                 posts.size(),
                 (preparedStatement, post) -> {
-                    preparedStatement.setString(1, post);
-                    preparedStatement.setObject(2, LocalDateTime.now());
+                    preparedStatement.setObject(1, userId);
+                    preparedStatement.setString(2, post);
+                    preparedStatement.setObject(3, LocalDateTime.now());
                 }
         );
     }
