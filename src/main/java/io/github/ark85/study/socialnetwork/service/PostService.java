@@ -9,8 +9,10 @@ import io.github.ark85.study.socialnetwork.model.api.request.PostUpdateRequest;
 import io.github.ark85.study.socialnetwork.model.api.response.PostCreateResponse;
 import io.github.ark85.study.socialnetwork.model.api.response.PostGetResponse;
 import io.github.ark85.study.socialnetwork.model.cache.PostEventType;
+import io.github.ark85.study.socialnetwork.model.queue.PostFeedEvent;
 import io.github.ark85.study.socialnetwork.repository.PostRepository;
 import io.github.ark85.study.socialnetwork.service.cache.PostCacheService;
+import io.github.ark85.study.socialnetwork.service.queue.PostPublisherService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
@@ -36,6 +38,7 @@ import java.util.UUID;
 public class PostService {
 
     private final PostCacheService postCacheService;
+    private final PostPublisherService postPublisherService;
     private final PostRepository postRepository;
     private final ImportProperties importProperties;
     private final CacheProperties cacheProperties;
