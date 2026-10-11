@@ -56,11 +56,6 @@ public class PostCacheService {
         log.debug("Rebuilt cache key={} size={}", cacheKey, posts.size());
     }
 
-    public void addPostIntoCache(Post post) {
-        friendService.getFriendIds(post.getAuthorId())
-                .forEach(friendId -> addPostIntoUserCache(friendId, post));
-    }
-
     public void addPostIntoUserCache(UUID userId, Post post) {
         String cacheKey = postsCacheKey + ":" + userId;
         if (!Boolean.TRUE.equals(redisTemplate.hasKey(cacheKey))) {
