@@ -21,7 +21,7 @@ public class PostEventListenerService {
     public void listenPostFeedEvents(PostFeedEvent postFeedEvent) {
         messagingTemplate.convertAndSendToUser(
                 postFeedEvent.getUserId().toString(),
-                "/queue/post/feed/posted",
+                "/queue/post-feed-posted",
                 postFeedEvent.getPost()
         );
         postCacheService.addPostIntoUserCache(postFeedEvent.getUserId(), postFeedEvent.getPost());
