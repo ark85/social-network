@@ -12,7 +12,7 @@ databaseChangeLog:
       comment: dialog_messages table creation
       changes:
         - sqlFile:
-            path: db/changelog/citus/v1/create_dialog_messages_table.sql
+            path: db/changelog/citus/v1/002_create_dialog_messages_table.sql
   - changeSet:
       id: 3
       author: ark85
