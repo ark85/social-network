@@ -193,6 +193,22 @@ services:
       timeout: 5s
       retries: 10
 
+  rabbit:
+    image: rabbitmq:4-management
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD}
+    networks:
+      - social_network
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
   backend:
     build:
       context: .
@@ -217,10 +233,17 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
 
+      RABBIT_HOST: rabbit
+      RABBIT_PORT: 5672
+      RABBIT_USERNAME: ${RABBIT_USERNAME}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+
     depends_on:
       haproxy:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbit:
         condition: service_healthy
       citus-coordinator:
         condition: service_healthy
