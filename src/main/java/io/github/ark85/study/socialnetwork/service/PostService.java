@@ -39,6 +39,7 @@ public class PostService {
 
     private final PostCacheService postCacheService;
     private final PostPublisherService postPublisherService;
+    private final FriendService friendService;
     private final PostRepository postRepository;
     private final ImportProperties importProperties;
     private final CacheProperties cacheProperties;
@@ -80,8 +81,13 @@ public class PostService {
         Post post = new Post(null, authorId, postCreateRequest.getText(), LocalDateTime.now());
         UUID id = postRepository.createPost(post);
         post.setId(id);
-        postCacheService.addPostEventIntoStream(PostEventType.CREATED, post);
+        publishPostToFriends(post);
         return new PostCreateResponse(id);
+    }
+
+    private void publishPostToFriends(Post post) {
+        friendService.getFriendIds(post.getAuthorId()).forEach(friendId ->
+                postPublisherService.publishPostFeedEvent(new PostFeedEvent(friendId, post)));
     }
 
     @Transactional

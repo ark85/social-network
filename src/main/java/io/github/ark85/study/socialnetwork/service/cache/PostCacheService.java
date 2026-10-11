@@ -57,13 +57,20 @@ public class PostCacheService {
     }
 
     public void addPostIntoCache(Post post) {
-        friendService.getFriendIds(post.getAuthorId()).forEach(friendId -> {
-            String cacheKey = postsCacheKey + ":" + friendId;
-            redisTemplate.opsForList().leftPush(cacheKey, post);
-            redisTemplate.opsForList().trim(cacheKey, 0, 999);
-            redisTemplate.expire(cacheKey, postsCacheTimeToLive);
-            log.debug("Added post {} to cache key={}", post.getId(), cacheKey);
-        });
+        friendService.getFriendIds(post.getAuthorId())
+                .forEach(friendId -> addPostIntoUserCache(friendId, post));
+    }
+
+    public void addPostIntoUserCache(UUID userId, Post post) {
+        String cacheKey = postsCacheKey + ":" + userId;
+        if (!Boolean.TRUE.equals(redisTemplate.hasKey(cacheKey))) {
+            log.debug("Skip cache update, key={} is absent", cacheKey);
+            return;
+        }
+        redisTemplate.opsForList().leftPush(cacheKey, post);
+        redisTemplate.opsForList().trim(cacheKey, 0, 999);
+        redisTemplate.expire(cacheKey, postsCacheTimeToLive);
+        log.debug("Added post {} to cache key={}", post.getId(), cacheKey);
     }
 
     public List<Post> getCachedPosts(UUID userId, int offset, int limit) {

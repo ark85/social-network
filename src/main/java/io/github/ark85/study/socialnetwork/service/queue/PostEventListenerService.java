@@ -1,6 +1,5 @@
 package io.github.ark85.study.socialnetwork.service.queue;
 
-import io.github.ark85.study.socialnetwork.model.cache.PostEventType;
 import io.github.ark85.study.socialnetwork.model.queue.PostFeedEvent;
 import io.github.ark85.study.socialnetwork.service.cache.PostCacheService;
 import lombok.AllArgsConstructor;
@@ -20,11 +19,13 @@ public class PostEventListenerService {
 
     @RabbitListener(queues = "#{@postFeedQueueNames}")
     public void listenPostFeedEvents(PostFeedEvent postFeedEvent) {
-        postCacheService.addPostEventIntoStream(PostEventType.CREATED, postFeedEvent.getPost());
         messagingTemplate.convertAndSendToUser(
                 postFeedEvent.getUserId().toString(),
                 "/post/feed/posted",
                 postFeedEvent.getPost()
         );
+        postCacheService.addPostIntoUserCache(postFeedEvent.getUserId(), postFeedEvent.getPost());
+        log.debug("Delivered post {} to user {}",
+                postFeedEvent.getPost().getId(), postFeedEvent.getUserId());
     }
 }
