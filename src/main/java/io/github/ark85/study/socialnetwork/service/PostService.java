@@ -4,6 +4,7 @@ import io.github.ark85.study.socialnetwork.configuration.CacheProperties;
 import io.github.ark85.study.socialnetwork.configuration.ImportProperties;
 import io.github.ark85.study.socialnetwork.exception.PostNotFoundException;
 import io.github.ark85.study.socialnetwork.model.Post;
+import io.github.ark85.study.socialnetwork.model.PostReference;
 import io.github.ark85.study.socialnetwork.model.api.request.PostCreateRequest;
 import io.github.ark85.study.socialnetwork.model.api.request.PostUpdateRequest;
 import io.github.ark85.study.socialnetwork.model.api.response.PostCreateResponse;
@@ -16,6 +17,7 @@ import io.github.ark85.study.socialnetwork.service.queue.PostPublisherService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -92,20 +94,22 @@ public class PostService {
 
     @Transactional
     public void updatePost(PostUpdateRequest postUpdateRequest) {
-        int updated = postRepository.updatePost(postUpdateRequest.getId(), postUpdateRequest.getText());
-        if (updated == 0) {
+        try {
+            PostReference updated = postRepository.updatePost(postUpdateRequest.getId(), postUpdateRequest.getText());
+            postCacheService.addPostEventIntoStream(PostEventType.UPDATED, updated.getAuthorId());
+        } catch (EmptyResultDataAccessException exception) {
             throw new PostNotFoundException(postUpdateRequest.getId());
         }
-        postCacheService.addPostEventIntoStream(PostEventType.UPDATED, null);
     }
 
     @Transactional
     public void deletePost(UUID id) {
-        int deleted = postRepository.deletePost(id);
-        if (deleted == 0) {
+        try {
+            PostReference deleted = postRepository.deletePost(id);
+            postCacheService.addPostEventIntoStream(PostEventType.DELETED, deleted.getAuthorId());
+        } catch (EmptyResultDataAccessException exception) {
             throw new PostNotFoundException(id);
         }
-        postCacheService.addPostEventIntoStream(PostEventType.DELETED, null);
     }
 
     @Transactional

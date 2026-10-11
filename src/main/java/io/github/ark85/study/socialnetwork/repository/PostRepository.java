@@ -1,10 +1,11 @@
 package io.github.ark85.study.socialnetwork.repository;
 
 import io.github.ark85.study.socialnetwork.model.Post;
+import io.github.ark85.study.socialnetwork.model.PostReference;
+import io.github.ark85.study.socialnetwork.model.mapper.PostReferenceRowMapper;
 import io.github.ark85.study.socialnetwork.model.mapper.PostRowMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -40,12 +41,16 @@ public class PostRepository {
                 UUID.class, post.getAuthorId(), post.getText(), post.getCreationDateTime());
     }
 
-    public int updatePost(UUID postId, String postText) {
-        return this.jdbcTemplate.update("UPDATE posts SET text = ? WHERE id = ?", postText, postId);
+    public PostReference updatePost(UUID postId, String postText) {
+        return this.jdbcTemplate.queryForObject(
+                "UPDATE posts SET text = ? WHERE id = ? RETURNING id, author_id",
+                new PostReferenceRowMapper(), postText, postId);
     }
 
-    public int deletePost(UUID id) {
-        return this.jdbcTemplate.update("DELETE FROM posts WHERE id = ?", id);
+    public PostReference deletePost(UUID id) {
+        return this.jdbcTemplate.queryForObject(
+                "DELETE FROM posts WHERE id = ? RETURNING id, author_id",
+                new PostReferenceRowMapper(), id);
     }
 
     public void createAll(UUID userId, List<String> posts) {

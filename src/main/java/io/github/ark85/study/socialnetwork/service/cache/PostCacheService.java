@@ -34,11 +34,11 @@ public class PostCacheService {
         this.postsCacheTimeToLive = Duration.ofHours(cacheProperties.getPostsCacheTimeToLiveHours());
     }
 
-    public void addPostEventIntoStream(PostEventType postEventType, Post post) {
+    public void addPostEventIntoStream(PostEventType postEventType, UUID authorId) {
         var recordId = redisTemplate.opsForStream().add(
                 StreamRecords.newRecord()
                         .in(RedisStreamsConstants.POST_EVENTS)
-                        .ofObject(new PostEvent(postEventType, post))
+                        .ofObject(new PostEvent(postEventType, authorId))
         );
         log.debug("Published {} event to stream {} with id {}",
                 postEventType, RedisStreamsConstants.POST_EVENTS, recordId);
