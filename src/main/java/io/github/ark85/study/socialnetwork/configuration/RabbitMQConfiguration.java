@@ -3,8 +3,11 @@ package io.github.ark85.study.socialnetwork.configuration;
 import io.github.ark85.study.socialnetwork.utils.RabbitConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +16,11 @@ import java.util.stream.IntStream;
 @Configuration
 @Slf4j
 public class RabbitMQConfiguration {
+
+    @Bean
+    public MessageConverter jacksonMessageConverter(JsonMapper jsonMapper) {
+        return new JacksonJsonMessageConverter(jsonMapper);
+    }
 
     @Bean
     public Declarables postFeedDeclarables(RabbitProperties rabbitProperties) {
