@@ -23,7 +23,7 @@ public class RabbitMQConfiguration {
     }
 
     @Bean
-    public Declarables postFeedDeclarables(RabbitProperties rabbitProperties) {
+    public Declarables postFeedDeclarables(RabbitMQProperties rabbitProperties) {
         List<Declarable> declarables = new ArrayList<>();
 
         TopicExchange exchange = ExchangeBuilder.topicExchange(
@@ -45,7 +45,7 @@ public class RabbitMQConfiguration {
     }
 
     @Bean
-    public List<String> postFeedQueueNames(RabbitProperties rabbitProperties) {
+    public List<String> postFeedQueueNames(RabbitMQProperties rabbitProperties) {
         return IntStream.range(0, rabbitProperties.getPostQueueNumber())
                 .mapToObj(i -> rabbitProperties.getPostRoutingKeyPrefix() + "." + RabbitConstants.QUEUE + "." + i)
                 .toList();

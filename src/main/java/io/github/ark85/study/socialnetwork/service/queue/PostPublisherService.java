@@ -1,6 +1,6 @@
 package io.github.ark85.study.socialnetwork.service.queue;
 
-import io.github.ark85.study.socialnetwork.configuration.RabbitProperties;
+import io.github.ark85.study.socialnetwork.configuration.RabbitMQProperties;
 import io.github.ark85.study.socialnetwork.model.queue.PostFeedEvent;
 import io.github.ark85.study.socialnetwork.utils.RabbitConstants;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ public class PostPublisherService {
 
     public PostPublisherService(RabbitTemplate rabbitTemplate,
                                 RabbitQueueRouterService rabbitQueueRouterService,
-                                RabbitProperties rabbitProperties) {
+                                RabbitMQProperties rabbitProperties) {
         this.rabbitTemplate = rabbitTemplate;
         this.rabbitQueueRouterService = rabbitQueueRouterService;
         this.exchangeName = rabbitProperties.getPostRoutingKeyPrefix() + "." + RabbitConstants.EXCHANGE;

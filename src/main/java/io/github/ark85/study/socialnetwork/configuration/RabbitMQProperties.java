@@ -7,7 +7,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "rabbit")
 @Data
-public class RabbitProperties {
+public class RabbitMQProperties {
     private String postRoutingKeyPrefix;
     private int postQueueNumber;
+    private int stompPort;
 }

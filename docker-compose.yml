@@ -194,7 +194,7 @@ services:
       retries: 10
 
   rabbit:
-    image: rabbitmq:4-management
+    build: ./compose-configuration/rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBIT_USERNAME}
       RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD}
@@ -203,8 +203,9 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+      - "61613:61613"
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_port_listener 61613" ]
       interval: 10s
       timeout: 10s
       retries: 10
@@ -237,6 +238,7 @@ services:
       RABBIT_PORT: 5672
       RABBIT_USERNAME: ${RABBIT_USERNAME}
       RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      RABBIT_STOMP_PORT: 61613
 
     depends_on:
       haproxy:
