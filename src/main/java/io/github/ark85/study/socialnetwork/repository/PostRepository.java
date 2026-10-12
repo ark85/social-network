@@ -1,10 +1,11 @@
 package io.github.ark85.study.socialnetwork.repository;
 
 import io.github.ark85.study.socialnetwork.model.Post;
+import io.github.ark85.study.socialnetwork.model.PostReference;
+import io.github.ark85.study.socialnetwork.model.mapper.PostReferenceRowMapper;
 import io.github.ark85.study.socialnetwork.model.mapper.PostRowMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -18,52 +19,50 @@ import java.util.UUID;
 public class PostRepository {
     private final JdbcTemplate jdbcTemplate;
 
-    public Post getPostById(UUID id) {
-        try {
-            return this.jdbcTemplate.queryForObject(
-                    "SELECT * FROM posts WHERE id = ?",
-                    new PostRowMapper(), id);
-        } catch (EmptyResultDataAccessException ex) {
-            log.error("Post is not found.", ex);
-            return null;
-        }
+    public List<Post> getUserPosts(UUID userId, int offset, int limit) {
+        return this.jdbcTemplate.query(
+                "SELECT post.* FROM friends friend_record JOIN posts post " +
+                        "ON post.author_id = friend_record.friend_id WHERE friend_record.user_id = ? " +
+                        "ORDER BY creation_date_time DESC OFFSET ? LIMIT ?",
+                new PostRowMapper(), userId, offset, limit);
     }
 
-    public List<Post> getPosts(int offset, int limit) {
+    public List<Post> getUserPosts(UUID userId, int limit) {
         return this.jdbcTemplate.query(
-                "SELECT * FROM posts ORDER BY creation_date_time DESC OFFSET ? LIMIT ?",
-                new PostRowMapper(), offset, limit);
-    }
-
-    public List<Post> getPosts(int limit) {
-        return this.jdbcTemplate.query(
-                "SELECT * FROM posts ORDER BY creation_date_time DESC LIMIT ?",
-                new PostRowMapper(), limit);
+                "SELECT post.* FROM friends friend_record JOIN posts post " +
+                        "ON post.author_id = friend_record.friend_id WHERE friend_record.user_id = ? " +
+                        "ORDER BY creation_date_time DESC LIMIT ?",
+                new PostRowMapper(), userId, limit);
     }
 
     public UUID createPost(Post post) {
         return this.jdbcTemplate.queryForObject(
-                "INSERT INTO posts (text, creation_date_time) VALUES (?, ?) RETURNING id",
-                UUID.class, post.getText(), post.getCreationDateTime());
+                "INSERT INTO posts (author_id, text, creation_date_time) VALUES (?, ?, ?) RETURNING id",
+                UUID.class, post.getAuthorId(), post.getText(), post.getCreationDateTime());
     }
 
-    public int updatePost(UUID postId, String postText) {
-        return this.jdbcTemplate.update("UPDATE posts SET text = ? WHERE id = ?", postText, postId);
+    public PostReference updatePost(UUID postId, String postText) {
+        return this.jdbcTemplate.queryForObject(
+                "UPDATE posts SET text = ? WHERE id = ? RETURNING id, author_id",
+                new PostReferenceRowMapper(), postText, postId);
     }
 
-    public int deletePost(UUID id) {
-        return this.jdbcTemplate.update("DELETE FROM posts WHERE id = ?", id);
+    public PostReference deletePost(UUID id) {
+        return this.jdbcTemplate.queryForObject(
+                "DELETE FROM posts WHERE id = ? RETURNING id, author_id",
+                new PostReferenceRowMapper(), id);
     }
 
-    public void createAll(List<String> posts) {
+    public void createAll(UUID userId, List<String> posts) {
         this.jdbcTemplate.batchUpdate(
-                "INSERT INTO posts (text, creation_date_time) VALUES " +
-                        "(?, ?)",
+                "INSERT INTO posts ( author_id, text, creation_date_time) VALUES " +
+                        "(?, ?, ?)",
                 posts,
                 posts.size(),
                 (preparedStatement, post) -> {
-                    preparedStatement.setString(1, post);
-                    preparedStatement.setObject(2, LocalDateTime.now());
+                    preparedStatement.setObject(1, userId);
+                    preparedStatement.setString(2, post);
+                    preparedStatement.setObject(3, LocalDateTime.now());
                 }
         );
     }

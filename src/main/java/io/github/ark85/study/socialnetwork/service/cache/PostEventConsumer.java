@@ -7,6 +7,8 @@ import org.springframework.data.redis.connection.stream.ObjectRecord;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.UUID;
+
 @Service
 @Validated
 @RequiredArgsConstructor
@@ -18,9 +20,13 @@ public class PostEventConsumer {
         PostEvent postEvent = message.getValue();
         log.debug("Consumed {} event from stream {} with id {}",
                 postEvent.getPostEventType(), message.getStream(), message.getId());
+        UUID authorId = postEvent.getAuthorId();
+        if (authorId == null) {
+            log.debug("Skip {} event without authorId", postEvent.getPostEventType());
+            return;
+        }
         switch (postEvent.getPostEventType()) {
-            case CREATED -> postCacheService.addPostIntoCache(postEvent.getPost());
-            case UPDATED, DELETED -> postCacheService.invalidateCache();
+            case UPDATED, DELETED -> postCacheService.invalidateCache(authorId);
         }
     }
 }

@@ -4,16 +4,20 @@ import io.github.ark85.study.socialnetwork.configuration.CacheProperties;
 import io.github.ark85.study.socialnetwork.configuration.ImportProperties;
 import io.github.ark85.study.socialnetwork.exception.PostNotFoundException;
 import io.github.ark85.study.socialnetwork.model.Post;
+import io.github.ark85.study.socialnetwork.model.PostReference;
 import io.github.ark85.study.socialnetwork.model.api.request.PostCreateRequest;
 import io.github.ark85.study.socialnetwork.model.api.request.PostUpdateRequest;
 import io.github.ark85.study.socialnetwork.model.api.response.PostCreateResponse;
 import io.github.ark85.study.socialnetwork.model.api.response.PostGetResponse;
 import io.github.ark85.study.socialnetwork.model.cache.PostEventType;
+import io.github.ark85.study.socialnetwork.model.queue.PostFeedEvent;
 import io.github.ark85.study.socialnetwork.repository.PostRepository;
 import io.github.ark85.study.socialnetwork.service.cache.PostCacheService;
+import io.github.ark85.study.socialnetwork.service.queue.PostPublisherService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -24,6 +28,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -35,74 +40,87 @@ import java.util.UUID;
 public class PostService {
 
     private final PostCacheService postCacheService;
+    private final PostPublisherService postPublisherService;
+    private final FriendService friendService;
     private final PostRepository postRepository;
     private final ImportProperties importProperties;
     private final CacheProperties cacheProperties;
 
     @Transactional(readOnly = true)
-    public List<PostGetResponse> getPosts(Integer offset, Integer limit) {
+    public List<PostGetResponse> getFriendsPosts(UUID userId, Integer offset, Integer limit) {
         int actualOffset = !Objects.isNull(offset) && offset >= 0 ? offset : 0;
         int actualLimit = !Objects.isNull(limit) && limit > 0 ? limit : 10;
         if (actualOffset + actualLimit <= 1000) {
-            List<Post> cachedPosts = postCacheService.getCachedPosts(actualOffset, actualLimit);
+            List<Post> cachedPosts = postCacheService.getCachedPosts(userId, actualOffset, actualLimit);
             if (cachedPosts != null) {
                 log.debug("Feed cache hit: offset={} limit={} size={}",
                         actualOffset, actualLimit, cachedPosts.size());
                 return cachedPosts.stream().map(PostGetResponse::new).toList();
             }
             log.debug("Feed cache miss: offset={} limit={}, rebuilding", actualOffset, actualLimit);
-            rebuildCache();
-            return postCacheService.getCachedPosts(actualOffset, actualLimit).stream()
-                    .map(PostGetResponse::new).toList();
+            rebuildCache(userId);
+            cachedPosts = postCacheService.getCachedPosts(userId, actualOffset, actualLimit);
+            if (cachedPosts != null) {
+                return cachedPosts.stream().map(PostGetResponse::new).toList();
+            }
+            log.debug("Posts are not found for userId = {}", userId);
+            return Collections.emptyList();
         }
 
         log.debug("Feed bypasses cache: offset={} limit={}", actualOffset, actualLimit);
-        List<Post> posts = postRepository.getPosts(actualOffset, actualLimit);
+        List<Post> posts = postRepository.getUserPosts(userId, actualOffset, actualLimit);
         return posts.stream().map(PostGetResponse::new).toList();
     }
 
     @Transactional(readOnly = true)
-    public void rebuildCache() {
-        List<Post> posts = postRepository.getPosts(cacheProperties.getCacheSize());
-        postCacheService.rebuildCache(posts);
+    public void rebuildCache(UUID userId) {
+        List<Post> posts = postRepository.getUserPosts(userId, cacheProperties.getCacheSize());
+        postCacheService.rebuildCache(userId, posts);
     }
 
     @Transactional
-    public PostCreateResponse createPost(PostCreateRequest postCreateRequest) {
-        Post post = new Post(null, postCreateRequest.getText(), LocalDateTime.now());
+    public PostCreateResponse createPost(UUID authorId, PostCreateRequest postCreateRequest) {
+        Post post = new Post(null, authorId, postCreateRequest.getText(), LocalDateTime.now());
         UUID id = postRepository.createPost(post);
         post.setId(id);
-        postCacheService.addPostEventIntoStream(PostEventType.CREATED, post);
+        publishPostToFriends(post);
         return new PostCreateResponse(id);
+    }
+
+    private void publishPostToFriends(Post post) {
+        friendService.getFriendIds(post.getAuthorId()).forEach(friendId ->
+                postPublisherService.publishPostFeedEvent(new PostFeedEvent(friendId, post)));
     }
 
     @Transactional
     public void updatePost(PostUpdateRequest postUpdateRequest) {
-        int updated = postRepository.updatePost(postUpdateRequest.getId(), postUpdateRequest.getText());
-        if (updated == 0) {
+        try {
+            PostReference updated = postRepository.updatePost(postUpdateRequest.getId(), postUpdateRequest.getText());
+            postCacheService.addPostEventIntoStream(PostEventType.UPDATED, updated.getAuthorId());
+        } catch (EmptyResultDataAccessException exception) {
             throw new PostNotFoundException(postUpdateRequest.getId());
         }
-        postCacheService.addPostEventIntoStream(PostEventType.UPDATED, null);
     }
 
     @Transactional
     public void deletePost(UUID id) {
-        int deleted = postRepository.deletePost(id);
-        if (deleted == 0) {
+        try {
+            PostReference deleted = postRepository.deletePost(id);
+            postCacheService.addPostEventIntoStream(PostEventType.DELETED, deleted.getAuthorId());
+        } catch (EmptyResultDataAccessException exception) {
             throw new PostNotFoundException(id);
         }
-        postCacheService.addPostEventIntoStream(PostEventType.DELETED, null);
     }
 
     @Transactional
-    public void importPosts(MultipartFile postsFile) throws IOException {
+    public void importPosts(UUID userId, MultipartFile postsFile) throws IOException {
         log.info("Start importPosts with batchSize = {}", importProperties.getBatchSize());
         try (
                 Reader reader = new InputStreamReader(postsFile.getInputStream(), StandardCharsets.UTF_8);
         ) {
             List<String> filePosts = reader.readAllLines();
             for (List<String> filePostsPartition : ListUtils.partition(filePosts, importProperties.getBatchSize())) {
-                postRepository.createAll(filePostsPartition);
+                postRepository.createAll(userId, filePostsPartition);
             }
         }
         log.info("importPosts is successfully finished");

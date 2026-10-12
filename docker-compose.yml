@@ -193,6 +193,23 @@ services:
       timeout: 5s
       retries: 10
 
+  rabbit:
+    build: ./compose-configuration/rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBIT_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBIT_PASSWORD}
+    networks:
+      - social_network
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+      - "61613:61613"
+    healthcheck:
+      test: [ "CMD-SHELL", "rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_port_listener 61613" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
   backend:
     build:
       context: .
@@ -217,10 +234,18 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
 
+      RABBIT_HOST: rabbit
+      RABBIT_PORT: 5672
+      RABBIT_USERNAME: ${RABBIT_USERNAME}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      RABBIT_STOMP_PORT: 61613
+
     depends_on:
       haproxy:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbit:
         condition: service_healthy
       citus-coordinator:
         condition: service_healthy

@@ -13,6 +13,7 @@ public class PostRowMapper implements RowMapper<Post> {
     public Post mapRow(ResultSet rs, int rowNum) throws SQLException {
         return new Post(
                 rs.getObject("id", UUID.class),
+                rs.getObject("author_id", UUID.class),
                 rs.getString("text"),
                 rs.getObject("creation_date_time", LocalDateTime.class)
         );
