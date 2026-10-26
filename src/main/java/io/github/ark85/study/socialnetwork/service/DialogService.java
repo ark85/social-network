@@ -6,9 +6,7 @@ import io.github.ark85.study.socialnetwork.model.api.response.DialogMessageSendR
 import io.github.ark85.study.socialnetwork.repository.DialogRepository;
 import io.github.ark85.study.socialnetwork.utils.DialogUtils;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
@@ -18,12 +16,10 @@ import java.util.UUID;
 @Service
 @AllArgsConstructor
 @Validated
-@Slf4j
 public class DialogService {
 
     private final DialogRepository dialogRepository;
 
-    @Transactional(transactionManager = "citusTransactionManager")
     public DialogMessageSendResponse sendMessage(UUID fromUserId, UUID toUserId, String text) {
         UUID dialogId = DialogUtils.generateDialogId(fromUserId, toUserId);
         DialogMessage dialogMessage = new DialogMessage(
@@ -31,7 +27,6 @@ public class DialogService {
         return new DialogMessageSendResponse(dialogRepository.createDialogMessage(dialogMessage));
     }
 
-    @Transactional(transactionManager = "citusTransactionManager", readOnly = true)
     public List<DialogMessageGetResponse> getDialogMessages(UUID fromUserId, UUID toUserId) {
         UUID dialogId = DialogUtils.generateDialogId(fromUserId, toUserId);
         return dialogRepository.getDialogMessages(dialogId).stream().map(DialogMessageGetResponse::new).toList();

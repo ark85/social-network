@@ -1,38 +1,46 @@
 package io.github.ark85.study.socialnetwork.repository;
 
 import io.github.ark85.study.socialnetwork.model.DialogMessage;
-import io.github.ark85.study.socialnetwork.model.mapper.DialogMessageRowMapper;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.jdbc.core.JdbcTemplate;
+import io.tarantool.client.box.TarantoolBoxClient;
+import io.tarantool.mapping.TarantoolResponse;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
 
 @Repository
-@Slf4j
+@AllArgsConstructor
 public class DialogRepository {
 
-    private final JdbcTemplate citusJdbcTemplate;
-
-    public DialogRepository(
-            @Qualifier("citusJdbcTemplate") JdbcTemplate citusJdbcTemplate) {
-        this.citusJdbcTemplate = citusJdbcTemplate;
-    }
+    private final TarantoolBoxClient tarantoolClient;
 
     public UUID createDialogMessage(DialogMessage dialogMessage) {
-        return this.citusJdbcTemplate.queryForObject(
-                "INSERT INTO dialog_messages (dialog_id, from_user_id, to_user_id, text, creation_date_time) " +
-                        "VALUES (?, ?, ?, ?, ?) returning id",
-                UUID.class,
-                dialogMessage.getDialogId(), dialogMessage.getFromUserId(), dialogMessage.getToUserId(),
-                dialogMessage.getText(), dialogMessage.getCreationDateTime());
+        List<Object> messageFields = List.of(
+                dialogMessage.getDialogId(),
+                dialogMessage.getFromUserId(),
+                dialogMessage.getToUserId(),
+                dialogMessage.getText(),
+                dialogMessage.getCreationDateTime()
+        );
+        TarantoolResponse<List<UUID>> response = this.tarantoolClient
+                .call("dialog_send", messageFields, UUID.class)
+                .join();
+        List<UUID> messageIds = response.get();
+        if (messageIds == null || messageIds.isEmpty() || messageIds.getFirst() == null) {
+            throw new IllegalStateException("dialog_send returned no message id");
+        }
+        return messageIds.getFirst();
     }
 
     public List<DialogMessage> getDialogMessages(UUID dialogId) {
-        return this.citusJdbcTemplate.query(
-                "SELECT * FROM dialog_messages WHERE dialog_id = ? ORDER BY creation_date_time DESC",
-                new DialogMessageRowMapper(), dialogId);
+        TarantoolResponse<List<DialogMessage>> response = this.tarantoolClient
+                .call("dialog_list", List.of(dialogId), DialogMessage.class)
+                .join();
+        List<DialogMessage> messages = response.get();
+        if (messages == null) {
+            return List.of();
+        }
+        return messages;
     }
 }

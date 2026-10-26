@@ -16,19 +16,6 @@ x-postgres-environment: &postgres-environment
   POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD}
   ETCD_NAME: etcd
 
-x-citus-environment: &citus-environment
-  <<: *postgres-environment
-  PGPASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
-
-x-citus-postgres: &citus-postgres
-  image: citusdata/citus:14.2.0
-  environment:
-    <<: *citus-environment
-  command:
-    - postgres
-    - -c
-    - wal_level=logical
-
 services:
   etcd:
     image: quay.io/coreos/etcd:v3.5.26
@@ -127,61 +114,26 @@ services:
       - 5433
       - 8404
 
-  citus-coordinator:
-    <<: *citus-postgres
-    ports:
-      - "55432:5432"
+  tarantool:
+    image: tarantool/tarantool:3.3.5
+    entrypoint: ["tarantool"]
+    command: ["/opt/tarantool/init.lua"]
+    environment:
+      TARANTOOL_USERNAME: ${TARANTOOL_USERNAME}
+      TARANTOOL_PASSWORD: ${TARANTOOL_PASSWORD}
     volumes:
-      - citus_coordinator_data:/var/lib/postgresql
+      - ./compose-configuration/tarantool/init.lua:/opt/tarantool/init.lua:ro
+      - ./compose-configuration/tarantool/schema.lua:/opt/tarantool/schema.lua:ro
+      - tarantool_data:/var/lib/tarantool
     networks:
       - social_network
-      - postgres
+    ports:
+      - "3301:3301"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/3301'"]
       interval: 5s
       timeout: 5s
       retries: 10
-
-  citus-worker-1:
-    <<: *citus-postgres
-    volumes:
-      - citus_worker_1_data:/var/lib/postgresql
-    networks:
-      - postgres
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  citus-worker-2:
-    <<: *citus-postgres
-    volumes:
-      - citus_worker_2_data:/var/lib/postgresql
-    networks:
-      - postgres
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  citus-manager:
-    build:
-      context: ./compose-configuration/citus
-    environment:
-      <<: *postgres-environment
-      CITUS_COORDINATOR_HOST: citus-coordinator
-      CITUS_COORDINATOR_PORT: 5432
-      CITUS_WORKERS: citus-worker-1:5432,citus-worker-2:5432
-
-    depends_on:
-      - citus-coordinator
-      - citus-worker-1
-      - citus-worker-2
-
-    networks:
-      - postgres
 
   redis:
     image: redis:8
@@ -224,7 +176,10 @@ services:
     environment:
       SOCIAL_NETWORK_READ_DB_URL: ${SOCIAL_NETWORK_READ_DB_URL}
       SOCIAL_NETWORK_WRITE_DB_URL: ${SOCIAL_NETWORK_WRITE_DB_URL}
-      SOCIAL_NETWORK_CITUS_DB_URL: ${SOCIAL_NETWORK_CITUS_DB_URL}
+      TARANTOOL_HOST: tarantool
+      TARANTOOL_PORT: 3301
+      TARANTOOL_USERNAME: ${TARANTOOL_USERNAME}
+      TARANTOOL_PASSWORD: ${TARANTOOL_PASSWORD}
       SOCIAL_NETWORK_DB_USERNAME: ${SOCIAL_NETWORK_DB_USERNAME}
       SOCIAL_NETWORK_DB_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
 
@@ -247,11 +202,7 @@ services:
         condition: service_healthy
       rabbit:
         condition: service_healthy
-      citus-coordinator:
-        condition: service_healthy
-      citus-worker-1:
-        condition: service_healthy
-      citus-worker-2:
+      tarantool:
         condition: service_healthy
 
     networks:
@@ -400,9 +351,7 @@ volumes:
   postgres_3_data:
   prometheus_data:
   grafana_data:
-  citus_coordinator_data:
-  citus_worker_1_data:
-  citus_worker_2_data:
+  tarantool_data:
 
 networks:
   postgres:
