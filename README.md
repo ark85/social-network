@@ -24,3 +24,19 @@
 
 * Call `/post/import` api
   * Use multipart with key `file` and value file `posts.txt`
+
+## How to migrate dialog messages from Citus to Tarantool
+
+* Start Citus and Tarantool before the rest of the application
+  * Call `docker compose -f ./docker-compose.yml -p social-network --profile dialog-migration up -d --build citus-coordinator citus-worker-1 citus-worker-2 tarantool`
+* Open the Tarantool console
+  * Call `MSYS_NO_PATHCONV=1 docker compose -f ./docker-compose.yml -p social-network exec -it tarantool tt connect /var/lib/tarantool/console.sock`
+    * `MSYS_NO_PATHCONV=1` keeps Git Bash from rewriting `/var/lib/tarantool/console.sock`
+* Or open a shell in the container and connect from there
+  * Call `docker compose -f ./docker-compose.yml -p social-network exec -it tarantool sh`
+  * Call `tt connect /var/lib/tarantool/console.sock`
+* Import dialog messages
+  * Call `import_dialog_messages()`
+    * Use `import_dialog_messages(500)` to set another batch size
+* Start the application
+  * Call `docker compose -f ./docker-compose.yml -p social-network up -d`

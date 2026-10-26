@@ -20,5 +20,11 @@ box.schema.user.create(applicationUsername, {
 })
 
 dofile('/opt/tarantool/schema.lua')
+dofile('/opt/tarantool/import_dialogs.lua')
+
+local console = require('console')
+local consoleSocket = '/var/lib/tarantool/console.sock'
+os.remove(consoleSocket)
+console.listen(consoleSocket)
 
 log.info('tarantool is ready for ' .. applicationUsername)

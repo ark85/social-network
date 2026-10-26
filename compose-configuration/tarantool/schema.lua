@@ -6,7 +6,7 @@ dialogMessages:format({
     { name = 'dialog_id', type = 'uuid' },
     { name = 'from_user_id', type = 'uuid' },
     { name = 'to_user_id', type = 'uuid' },
-    { name = 'text', type = 'string' },
+    { name = 'text', type = 'string', is_nullable = true },
     { name = 'created_at', type = 'datetime' },
 })
 dialogMessages:create_index('primary', {
