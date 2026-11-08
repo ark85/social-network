@@ -24,6 +24,7 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
+            RequestIdFilter requestIdFilter,
             JwtAuthenticationFilter jwtAuthenticationFilter) {
         http
                 .cors(Customizer.withDefaults())
@@ -32,6 +33,7 @@ public class SecurityConfiguration {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(requestIdFilter, JwtAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login", "/user/register").permitAll()
                         .requestMatchers("/api/health-check/**").permitAll()
