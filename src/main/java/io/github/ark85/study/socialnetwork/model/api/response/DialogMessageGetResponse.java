@@ -1,6 +1,5 @@
 package io.github.ark85.study.socialnetwork.model.api.response;
 
-import io.github.ark85.study.socialnetwork.model.DialogMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,13 +17,4 @@ public class DialogMessageGetResponse {
     private UUID toUserId;
     private String text;
     private LocalDateTime creationDateTime;
-
-    public DialogMessageGetResponse(DialogMessage dialogMessage) {
-        this.id = dialogMessage.getId();
-        this.dialogId = dialogMessage.getDialogId();
-        this.fromUserId = dialogMessage.getFromUserId();
-        this.toUserId = dialogMessage.getToUserId();
-        this.text = dialogMessage.getText();
-        this.creationDateTime = dialogMessage.getCreationDateTime();
-    }
 }

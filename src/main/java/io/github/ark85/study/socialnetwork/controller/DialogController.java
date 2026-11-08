@@ -1,9 +1,9 @@
 package io.github.ark85.study.socialnetwork.controller;
 
+import io.github.ark85.study.socialnetwork.client.DialogClient;
 import io.github.ark85.study.socialnetwork.model.api.request.DialogMessageSendRequest;
 import io.github.ark85.study.socialnetwork.model.api.response.DialogMessageGetResponse;
 import io.github.ark85.study.socialnetwork.model.api.response.DialogMessageSendResponse;
-import io.github.ark85.study.socialnetwork.service.DialogService;
 import io.github.ark85.study.socialnetwork.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -21,22 +21,21 @@ import java.util.UUID;
 @AllArgsConstructor
 public class DialogController {
 
-    private final DialogService dialogService;
+    private final DialogClient dialogClient;
     private final UserService userService;
 
     @PostMapping(path = "/{userId}/send")
     public ResponseEntity<DialogMessageSendResponse> sendMessage(
             @PathVariable UUID userId, @RequestBody @Valid DialogMessageSendRequest dialogMessageSendRequest,
-            Authentication authentication) {
+            @RequestHeader("Authorization") String authorization) {
         // checks if toUser exists
         userService.getUserById(userId);
-        return ResponseEntity.ok(dialogService.sendMessage(
-                UUID.fromString(authentication.getName()), userId, dialogMessageSendRequest.getText()));
+        return ResponseEntity.ok(dialogClient.sendMessage(userId, dialogMessageSendRequest, authorization));
     }
 
     @GetMapping(path = "/{userId}/list")
     public ResponseEntity<List<DialogMessageGetResponse>> getMessages(
-            @PathVariable UUID userId, Authentication authentication) {
-        return ResponseEntity.ok(dialogService.getDialogMessages(UUID.fromString(authentication.getName()), userId));
+            @PathVariable UUID userId, @RequestHeader("Authorization") String authorization) {
+        return ResponseEntity.ok(dialogClient.getMessages(userId, authorization));
     }
 }
