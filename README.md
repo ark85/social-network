@@ -40,3 +40,10 @@
     * Use `import_dialog_messages(500)` to set another batch size
 * Start the application
   * Call `docker compose -f ./docker-compose.yml -p social-network up -d`
+
+## How to work with social-network-dialogs
+
+Need to create external network `dialogs`:
+* Call `docker network create dialogs`
+* Start `social-network-dialogs`, then start this project with [How to start](#how-to-start)
+  * `up` recreates `backend` when the network or `SOCIAL_NETWORK_DIALOGS_URL` changed
