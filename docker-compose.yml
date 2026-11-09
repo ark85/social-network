@@ -196,13 +196,10 @@ services:
       timeout: 10s
       retries: 10
 
-  backend:
+  backend-1:
     build:
       context: .
       dockerfile: Dockerfile
-
-    ports:
-      - "8080:8080"
 
     expose:
       - 8080
@@ -240,10 +237,70 @@ services:
       - dialogs
 
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://backend:8080/api/health-check/ping || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://backend-1:8080/api/health-check/ping || exit 1" ]
       interval: 5s
       timeout: 5s
       retries: 10
+
+  backend-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    expose:
+      - 8080
+
+    environment:
+      SOCIAL_NETWORK_READ_DB_URL: ${SOCIAL_NETWORK_READ_DB_URL}
+      SOCIAL_NETWORK_WRITE_DB_URL: ${SOCIAL_NETWORK_WRITE_DB_URL}
+      SOCIAL_NETWORK_DB_USERNAME: ${SOCIAL_NETWORK_DB_USERNAME}
+      SOCIAL_NETWORK_DB_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL}
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+      RABBIT_HOST: rabbit
+      RABBIT_PORT: 5672
+      RABBIT_USERNAME: ${RABBIT_USERNAME}
+      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+      RABBIT_STOMP_PORT: 61613
+
+      SOCIAL_NETWORK_DIALOGS_URL: ${SOCIAL_NETWORK_DIALOGS_URL}
+
+    depends_on:
+      haproxy:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbit:
+        condition: service_healthy
+
+    networks:
+      - social_network
+      - dialogs
+
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://backend-2:8080/api/health-check/ping || exit 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./compose-configuration/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      backend-1:
+        condition: service_healthy
+      backend-2:
+        condition: service_healthy
+    networks:
+      - social_network
 
   # ----------- monitoring start -------------
 
