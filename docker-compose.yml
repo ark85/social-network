@@ -29,6 +29,46 @@ x-citus-postgres: &citus-postgres
     - -c
     - wal_level=logical
 
+x-backend-common: &backend-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+
+  expose:
+    - 8080
+
+  environment:
+    SOCIAL_NETWORK_READ_DB_URL: ${SOCIAL_NETWORK_READ_DB_URL}
+    SOCIAL_NETWORK_WRITE_DB_URL: ${SOCIAL_NETWORK_WRITE_DB_URL}
+    SOCIAL_NETWORK_DB_USERNAME: ${SOCIAL_NETWORK_DB_USERNAME}
+    SOCIAL_NETWORK_DB_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
+
+    JWT_SECRET: ${JWT_SECRET}
+    JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL}
+
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+
+    RABBIT_HOST: rabbit
+    RABBIT_PORT: 5672
+    RABBIT_USERNAME: ${RABBIT_USERNAME}
+    RABBIT_PASSWORD: ${RABBIT_PASSWORD}
+    RABBIT_STOMP_PORT: 61613
+
+    SOCIAL_NETWORK_DIALOGS_URL: ${SOCIAL_NETWORK_DIALOGS_URL}
+
+  depends_on:
+    haproxy:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    rabbit:
+      condition: service_healthy
+
+  networks:
+    - social_network
+    - dialogs
+
 services:
   etcd:
     image: quay.io/coreos/etcd:v3.5.26
@@ -197,45 +237,7 @@ services:
       retries: 10
 
   backend-1:
-    build:
-      context: .
-      dockerfile: Dockerfile
-
-    expose:
-      - 8080
-
-    environment:
-      SOCIAL_NETWORK_READ_DB_URL: ${SOCIAL_NETWORK_READ_DB_URL}
-      SOCIAL_NETWORK_WRITE_DB_URL: ${SOCIAL_NETWORK_WRITE_DB_URL}
-      SOCIAL_NETWORK_DB_USERNAME: ${SOCIAL_NETWORK_DB_USERNAME}
-      SOCIAL_NETWORK_DB_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
-
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL}
-
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-
-      RABBIT_HOST: rabbit
-      RABBIT_PORT: 5672
-      RABBIT_USERNAME: ${RABBIT_USERNAME}
-      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
-      RABBIT_STOMP_PORT: 61613
-
-      SOCIAL_NETWORK_DIALOGS_URL: ${SOCIAL_NETWORK_DIALOGS_URL}
-
-    depends_on:
-      haproxy:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbit:
-        condition: service_healthy
-
-    networks:
-      - social_network
-      - dialogs
-
+    <<: *backend-common
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://backend-1:8080/api/health-check/ping || exit 1" ]
       interval: 5s
@@ -243,45 +245,7 @@ services:
       retries: 10
 
   backend-2:
-    build:
-      context: .
-      dockerfile: Dockerfile
-
-    expose:
-      - 8080
-
-    environment:
-      SOCIAL_NETWORK_READ_DB_URL: ${SOCIAL_NETWORK_READ_DB_URL}
-      SOCIAL_NETWORK_WRITE_DB_URL: ${SOCIAL_NETWORK_WRITE_DB_URL}
-      SOCIAL_NETWORK_DB_USERNAME: ${SOCIAL_NETWORK_DB_USERNAME}
-      SOCIAL_NETWORK_DB_PASSWORD: ${SOCIAL_NETWORK_DB_PASSWORD}
-
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_ACCESS_TOKEN_TTL: ${JWT_ACCESS_TOKEN_TTL}
-
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-
-      RABBIT_HOST: rabbit
-      RABBIT_PORT: 5672
-      RABBIT_USERNAME: ${RABBIT_USERNAME}
-      RABBIT_PASSWORD: ${RABBIT_PASSWORD}
-      RABBIT_STOMP_PORT: 61613
-
-      SOCIAL_NETWORK_DIALOGS_URL: ${SOCIAL_NETWORK_DIALOGS_URL}
-
-    depends_on:
-      haproxy:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbit:
-        condition: service_healthy
-
-    networks:
-      - social_network
-      - dialogs
-
+    <<: *backend-common
     healthcheck:
       test: [ "CMD-SHELL", "curl -f http://backend-2:8080/api/health-check/ping || exit 1" ]
       interval: 5s
